@@ -27,6 +27,12 @@ class Kaart:
             return True
         else:
             return False
+        
+
+    def __eq__(self, other):
+        return (self.aantal == other.aantal and self.kleur == other.kleur and self.vulling == other.vulling and self.vorm == other.vorm)
+    
+
 class Spel:
     def __init__(self, aantallen, kleuren, vullingen, vormen):
         self.aantallen=aantallen
@@ -41,7 +47,11 @@ class Spel:
                     for vorm in self.vormen:
                         kaarten_list.append(Kaart(aantal, kleur, vulling, vorm))
         self.alle_kaarten=kaarten_list
-
+    
+    def print_kaarten(self, kaarten_lijst):
+        for kaart in kaarten_lijst:
+            print(kaart)
+    
     def maak_start_tafel(self):
         actieve_kaarten=[]
         for _ in range(12):
@@ -57,6 +67,15 @@ class Spel:
             if combination[0].check_3_cards_if_set(combination[1], combination[2]):
                 gevonden_sets.append(combination)
         return gevonden_sets
+    
+    def verwijder_set(self, index1, index2, index3, huidige_tafel):
+        for index in [index1, index2, index3]:
+            current_card=huidige_tafel[index-1]
+            self.alle_kaarten.remove(current_card)
+            huidige_tafel[index-1]=False
+        for item in huidige_tafel:
+            if type(item)!=Kaart:
+                huidige_tafel.pop(item)        
 
 def main():
     pass

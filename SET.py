@@ -1,4 +1,4 @@
-class kaart:
+class Kaart:
     def __init__(self, aantal, kleur, vulling, vorm):
         self.aantal=aantal
         self.kleur=kleur
@@ -25,6 +25,24 @@ class kaart:
             return True
         else:
             return False
+class Spel:
+    def __init__(self, aantallen, kleuren, vullingen, vormen):
+        self.aantallen=aantallen
+        self.kleuren=kleuren
+        self.vullingen=vullingen
+        self.vormen=vormen
+    
+    @property
+    def alle_kaarten(self):
+        kaarten_list=[]
+        for aantal in self.aantallen:
+            for kleur in self.kleuren:
+                for vulling in self.vullingen:
+                    for vorm in self.vormen:
+                        kaarten_list.append(Kaart(aantal, kleur, vulling, vorm))
+        return kaarten_list
+
+
 def main():
     pass
 if __name__=="__main__":

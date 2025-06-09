@@ -21,7 +21,7 @@ def verwijder_kaarten_van_tafel():
     SET.print_kaarten(start_tafel)
     print("vooraf alle kaarten")
     SET.print_kaarten(SET.alle_kaarten)
-    SET.verwijder_bepaalde_open_kaarten(1,2,3, start_tafel)
+    SET.verwijder_bepaalde_open_kaarten(12,2,3, start_tafel)
     print("na verwijderen tafel")
     SET.print_kaarten(start_tafel)
     print("na verwijderen alle kaarten")

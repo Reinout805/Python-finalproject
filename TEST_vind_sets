@@ -1,5 +1,5 @@
 from SET import Spel, Kaart
-def main():
+def vind_sets_1():
     SET=Spel([1,2,3], ["rood", "groen", "blauw"], ["leeg", "gestreept", "gevuld"], ["ovaal", "diamand", "kronkel"])
     start_tafel = [
         Kaart(1, "rood", "leeg", "golf"),
@@ -20,6 +20,33 @@ def main():
         print("De gevonden set is:")
         for kaart in set:
             print(f"       {kaart}")
+def vind_sets_2():
+    SET=Spel([1,2,3], ["rood", "groen", "blauw"], ["leeg", "gestreept", "gevuld"], ["ovaal", "diamand", "kronkel"])
+    start_tafel = [
+        # set
+        Kaart(2, 'groen', 'vol', 'ruit'),
+        Kaart(2, 'rood', 'leeg', 'golf'),
+        Kaart(2, 'paars', 'gestreept', 'ovaal'),
+        # geen set
+        Kaart(3, 'rood', 'gestreept', 'golf'),        
+        Kaart(3, 'rood', 'leeg', 'golf'),        
+        Kaart(1, 'paars', 'gestreept', 'ruit'),
+        Kaart(2, 'groen', 'leeg', 'golf'),
+        Kaart(2, 'paars', 'vol', 'ruit'),
+        Kaart(3, 'groen', 'gestreept', 'ovaal'),
+        Kaart(3, 'paars', 'leeg', 'golf'),
+        Kaart(1, 'rood', 'vol', 'ruit'),        
+        Kaart(3, 'paars', 'vol', 'golf'),
+            ]
+    gevonden_sets=SET.controleer_sets(start_tafel)
+    for set in gevonden_sets:
+        print("De gevonden set is:")
+        for kaart in set:
+            print(f"       {kaart}")
+def main():
+    #vind_sets_1
+    vind_sets_2()
+    
 
 if __name__=="__main__":
     main()

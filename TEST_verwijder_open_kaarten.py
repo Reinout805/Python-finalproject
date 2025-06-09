@@ -1,5 +1,5 @@
 from SET import Spel, Kaart
-def verwijder_set():
+def verwijder_kaarten_van_tafel():
     SET=Spel([1,2,3], ["rood", "groen", "paars"], ["leeg", "gestreept", "vol"], ["ovaal", "ruit", "golf"])
     start_tafel = [
         # set (verander de eerste kaart in paars zodat er geen set te vinden is)
@@ -21,13 +21,13 @@ def verwijder_set():
     SET.print_kaarten(start_tafel)
     print("vooraf alle kaarten")
     SET.print_kaarten(SET.alle_kaarten)
-    SET.verwijder_set(1,2,3, start_tafel)
+    SET.verwijder_bepaalde_open_kaarten(1,2,3, start_tafel)
     print("na verwijderen tafel")
     SET.print_kaarten(start_tafel)
     print("na verwijderen alle kaarten")
     SET.print_kaarten(SET.alle_kaarten)
 def main():
-    verwijder_set()
+    verwijder_kaarten_van_tafel()
     
 
 if __name__=="__main__":

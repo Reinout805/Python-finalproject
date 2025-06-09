@@ -68,14 +68,16 @@ class Spel:
                 gevonden_sets.append(combination)
         return gevonden_sets
     
-    def verwijder_set(self, index1, index2, index3, huidige_tafel):
+    def verwijder_bepaalde_open_kaarten(self, index1, index2, index3, huidige_tafel):
         for index in [index1, index2, index3]:
             current_card=huidige_tafel[index-1]
             self.alle_kaarten.remove(current_card)
             huidige_tafel[index-1]=False
         for item in huidige_tafel:
             if type(item)!=Kaart:
-                huidige_tafel.pop(item)        
+                huidige_tafel.pop(item) 
+
+
 
 def main():
     pass

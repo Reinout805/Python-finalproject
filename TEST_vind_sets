@@ -1,0 +1,25 @@
+from SET import Spel, Kaart
+def main():
+    SET=Spel([1,2,3], ["rood", "groen", "blauw"], ["leeg", "gestreept", "gevuld"], ["ovaal", "diamand", "kronkel"])
+    start_tafel = [
+        Kaart(1, "rood", "leeg", "golf"),
+        Kaart(2, "groen", "gestreept", "ruit"),
+        Kaart(3, "paars", "vol", "ovaal"),
+        Kaart(1, "groen", "vol", "golf"),
+        Kaart(2, "rood", "leeg", "ruit"),
+        Kaart(3, "rood", "gestreept", "golf"),
+        Kaart(1, "paars", "vol", "ruit"),
+        Kaart(2, "paars", "leeg", "ovaal"),
+        Kaart(3, "groen", "gestreept", "ovaal"),
+        Kaart(1, "rood", "vol", "ovaal"),
+        Kaart(2, "groen", "leeg", "golf"),
+        Kaart(3, "paars", "gestreept", "golf"),
+            ]
+    gevonden_sets=SET.controleer_sets(start_tafel)
+    for set in gevonden_sets:
+        print("De gevonden set is:")
+        for kaart in set:
+            print(f"       {kaart}")
+
+if __name__=="__main__":
+    main()

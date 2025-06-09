@@ -1,3 +1,5 @@
+import random
+from itertools import combinations
 class Kaart:
     def __init__(self, aantal, kleur, vulling, vorm):
         self.aantal=aantal
@@ -31,17 +33,30 @@ class Spel:
         self.kleuren=kleuren
         self.vullingen=vullingen
         self.vormen=vormen
-    
-    @property
-    def alle_kaarten(self):
+
         kaarten_list=[]
         for aantal in self.aantallen:
             for kleur in self.kleuren:
                 for vulling in self.vullingen:
                     for vorm in self.vormen:
                         kaarten_list.append(Kaart(aantal, kleur, vulling, vorm))
-        return kaarten_list
+        self.alle_kaarten=kaarten_list
 
+    def maak_start_tafel(self):
+        actieve_kaarten=[]
+        for _ in range(12):
+            new_kaart_index=random.choice(range(0,len(self.alle_kaarten)))
+            actieve_kaarten.append(self.alle_kaarten[new_kaart_index])
+            self.alle_kaarten.pop(new_kaart_index)
+        return  actieve_kaarten
+    
+    def controleer_sets(self, huidige_tafel):
+        gevonden_sets=[]
+        mogelijke_sets=combinations(huidige_tafel,3)
+        for combination in mogelijke_sets:
+            if combination[0].check_3_cards_if_set(combination[1], combination[2]):
+                gevonden_sets.append(combination)
+        return gevonden_sets
 
 def main():
     pass

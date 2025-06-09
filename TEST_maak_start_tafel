@@ -1,0 +1,7 @@
+from SET import Spel
+def main():
+    SET=Spel([1,2,3], ["rood", "groen", "blauw"], ["leeg", "gestreept", "gevuld"], ["ovaal", "diamand", "kronkel"])
+    for kaart in SET.maak_start_tafel():
+        print(kaart)
+if __name__=="__main__":
+    main()

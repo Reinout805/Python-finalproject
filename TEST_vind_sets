@@ -23,7 +23,7 @@ def vind_sets_1():
 def vind_sets_2():
     SET=Spel([1,2,3], ["rood", "groen", "blauw"], ["leeg", "gestreept", "gevuld"], ["ovaal", "diamand", "kronkel"])
     start_tafel = [
-        # set
+        # set (verander de eerste kaart in paars zodat er geen set te vinden is)
         Kaart(2, 'groen', 'vol', 'ruit'),
         Kaart(2, 'rood', 'leeg', 'golf'),
         Kaart(2, 'paars', 'gestreept', 'ovaal'),

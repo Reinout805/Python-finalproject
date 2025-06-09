@@ -47,10 +47,15 @@ class Spel:
                     for vorm in self.vormen:
                         kaarten_list.append(Kaart(aantal, kleur, vulling, vorm))
         self.alle_kaarten=kaarten_list
+        self.gevonden_sets=[]
     
     def print_kaarten(self, kaarten_lijst):
         for kaart in kaarten_lijst:
             print(kaart)
+    
+    def print_gevonden_sets(self):
+        for item in self.gevonden_sets:
+            self.print_kaarten(item)
     
     def maak_start_tafel(self):
         actieve_kaarten=[]
@@ -68,16 +73,22 @@ class Spel:
                 gevonden_sets.append(combination)
         return gevonden_sets
     
-    def verwijder_bepaalde_open_kaarten(self, index1, index2, index3, huidige_tafel):
-        indexen_in_huidigelijst=[]
+    def verwijder_set(self, index1, index2, index3, huidige_tafel):
+        new_set=[]
         for index in [index1, index2, index3]:
-            current_card=huidige_tafel[index-1]
-            self.alle_kaarten.remove(current_card)
+            new_set.append(huidige_tafel[index-1])
             huidige_tafel[index-1]=False
-            indexen_in_huidigelijst.append
+        self.gevonden_sets.append(new_set)
         for i in range(11,-1,-1):
             if type(huidige_tafel[i])!=Kaart:
                 huidige_tafel.pop(i) 
+        
+    def voeg_kaarten_toe_op_tafel(self, huidige_tafel):
+        for _ in range(3):
+            new_kaart_index=random.choice(range(0,len(self.alle_kaarten)))
+            huidige_tafel.append(self.alle_kaarten[new_kaart_index])
+            self.alle_kaarten.pop(new_kaart_index)
+
 
 def main():
     pass

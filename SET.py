@@ -88,6 +88,33 @@ class Spel:
             new_kaart_index=random.choice(range(0,len(self.alle_kaarten)))
             huidige_tafel.append(self.alle_kaarten[new_kaart_index])
             self.alle_kaarten.pop(new_kaart_index)
+    
+    def verwijder_willekeurige_set(self, huidige_tafel):
+        random_set=random.choice(self.controleer_sets(huidige_tafel))
+        index1=huidige_tafel.index(random_set[0])+1
+        index2=huidige_tafel.index(random_set[1])+1
+        index3=huidige_tafel.index(random_set[2])+1
+        self.verwijder_set(index1, index2, index3, huidige_tafel)
+        self.voeg_kaarten_toe_op_tafel(huidige_tafel)
+
+    def verwijder_random_kaarten_op_tafel(self, huidige_tafel):
+        gekozen_indices=[]
+        mogelijke_index=range(12)
+        verwijderde_kaarten_lijst=[]
+        for _ in range(3):
+            new_index=random.choice(mogelijke_index)
+            gekozen_indices.append(new_index)
+            verwijderde_kaarten_lijst.append(huidige_tafel[new_index])
+            mogelijke_index.pop(new_index)
+        for index in gekozen_indices:
+            huidige_tafel[index]=False
+        for i in range(11,-1,-1):
+            if type(huidige_tafel[i])!=Kaart:
+                huidige_tafel.pop(i) 
+        for kaart in verwijderde_kaarten_lijst:
+            self.alle_kaarten.append(kaart)
+        
+
 
 
 def main():

@@ -50,8 +50,10 @@ class Spel:
         self.gevonden_sets=[]
     
     def print_kaarten(self, kaarten_lijst):
+        x=1
         for kaart in kaarten_lijst:
-            print(kaart)
+            print(f"{x}e kaart:", kaart)
+            x+=1
     
     def print_gevonden_sets(self):
         for item in self.gevonden_sets:
@@ -84,8 +86,10 @@ class Spel:
                 huidige_tafel.pop(i) 
         
     def voeg_kaarten_toe_op_tafel(self, huidige_tafel):
+        print("de kaarten die nu zijn toegevoegd:")
         for _ in range(3):
             new_kaart_index=random.choice(range(0,len(self.alle_kaarten)))
+            print(self.alle_kaarten[new_kaart_index])
             huidige_tafel.append(self.alle_kaarten[new_kaart_index])
             self.alle_kaarten.pop(new_kaart_index)
     
@@ -114,31 +118,62 @@ class Spel:
         for i in range(11,-1,-1):
             if type(huidige_tafel[i])!=Kaart:
                 huidige_tafel.pop(i) 
+        print("de verwijderde kaarten zijn: ") 
+        self.print_kaarten(verwijderde_kaarten_lijst)
         self.voeg_kaarten_toe_op_tafel(huidige_tafel)
         for kaart in verwijderde_kaarten_lijst:
             self.alle_kaarten.append(kaart)
         
 def game():
-    punten=0
+    punten_speler=0
+    punten_computer=0
     SET=Spel([1,2,3], ["rood", "groen", "paars"], ["leeg", "gestreept", "vol"], ["ovaal", "ruit", "golf"])
     start_tafel=SET.maak_start_tafel()
-    while True:
-        print("De kaarten op tafel zijn:")
+    x=True
+    while x:
+        print("\n \n \n De kaarten op tafel zijn:")
         SET.print_kaarten(start_tafel)
         print(f"Er zijn nog {len(SET.alle_kaarten)} kaarten in de pot.")
         inputs=input()
-        if inputs=="Geen set gevonden":
-            if len(SET.controleer_sets())!=0:
-                SET.verwijder_willekeurige_set()
-                SET.voeg_kaarten_toe_op_tafel()
+        if inputs=="geen set gevonden":
+            print("\n \n ")
+            if len(SET.controleer_sets(start_tafel))!=0:
+                SET.verwijder_willekeurige_set(start_tafel)
+                punten_computer+=1
+                print("\n")
+                print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
             else:
                 print("ik heb geen set gevonden, ik verwijder 3 random kaarten op tafel")
-                SET.verwijder_random_kaarten_op_tafel()
+                SET.verwijder_random_kaarten_op_tafel(start_tafel)
+                print("\n")
+                print(f"puntenspeler= {punten_speler} & punten computer= {punten_computer}")
+        else: 
+            inputslist=inputs.split(" ")
+            index1=int(inputslist[0])
+            index2=int(inputslist[1])
+            index3=int(inputslist[2])
+            kaart1=start_tafel[index1 - 1]
+            kaart2=start_tafel[index2 - 1]
+            kaart3=start_tafel[index3 - 1]
+            if kaart1.check_3_cards_if_set(kaart2, kaart3):
+                print("de set is goed")
+                SET.verwijder_set(index1, index2,index3, start_tafel)
+                SET.voeg_kaarten_toe_op_tafel(start_tafel)
+                print("\n")
+                punten_speler+=1
+                print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
+            else:
+                print("de set is fout")
+                print("\n")
+                print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
+        if len(SET.controleer_sets(SET.alle_kaarten+start_tafel))==0:
+            x=False
+
                 
 
 
 def main():
-    pass
+    game()
 if __name__=="__main__":
     main()
 

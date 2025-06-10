@@ -6,7 +6,7 @@ def willekeurige_set_verwijderen():
     SET.print_kaarten(huidige_tafel)
     print("\n alle kaarten:")
     SET.print_kaarten(SET.alle_kaarten)
-    SET.verwijder_willekeurige_set(huidige_tafel)
+    SET.verwijder_random_kaarten_op_tafel(huidige_tafel)
     print("\n tafel na verwijderen")
     SET.print_kaarten(huidige_tafel)
     print("\n alle kaarten (na verwijderen):")

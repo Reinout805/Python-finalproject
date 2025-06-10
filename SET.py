@@ -91,6 +91,9 @@ class Spel:
     
     def verwijder_willekeurige_set(self, huidige_tafel):
         random_set=random.choice(self.controleer_sets(huidige_tafel))
+        print("de gevonden set is: ")
+        for kaart in random_set:
+            print(kaart)
         index1=huidige_tafel.index(random_set[0])+1
         index2=huidige_tafel.index(random_set[1])+1
         index3=huidige_tafel.index(random_set[2])+1
@@ -99,22 +102,39 @@ class Spel:
 
     def verwijder_random_kaarten_op_tafel(self, huidige_tafel):
         gekozen_indices=[]
-        mogelijke_index=range(12)
+        mogelijke_index=list(range(12))
         verwijderde_kaarten_lijst=[]
         for _ in range(3):
             new_index=random.choice(mogelijke_index)
             gekozen_indices.append(new_index)
             verwijderde_kaarten_lijst.append(huidige_tafel[new_index])
-            mogelijke_index.pop(new_index)
+            mogelijke_index.remove(new_index)
         for index in gekozen_indices:
             huidige_tafel[index]=False
         for i in range(11,-1,-1):
             if type(huidige_tafel[i])!=Kaart:
                 huidige_tafel.pop(i) 
+        self.voeg_kaarten_toe_op_tafel(huidige_tafel)
         for kaart in verwijderde_kaarten_lijst:
             self.alle_kaarten.append(kaart)
         
-
+def game():
+    punten=0
+    SET=Spel([1,2,3], ["rood", "groen", "paars"], ["leeg", "gestreept", "vol"], ["ovaal", "ruit", "golf"])
+    start_tafel=SET.maak_start_tafel()
+    while True:
+        print("De kaarten op tafel zijn:")
+        SET.print_kaarten(start_tafel)
+        print(f"Er zijn nog {len(SET.alle_kaarten)} kaarten in de pot.")
+        inputs=input()
+        if inputs=="Geen set gevonden":
+            if len(SET.controleer_sets())!=0:
+                SET.verwijder_willekeurige_set()
+                SET.voeg_kaarten_toe_op_tafel()
+            else:
+                print("ik heb geen set gevonden, ik verwijder 3 random kaarten op tafel")
+                SET.verwijder_random_kaarten_op_tafel()
+                
 
 
 def main():

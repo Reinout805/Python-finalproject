@@ -81,7 +81,7 @@ class Spel:
             new_set.append(huidige_tafel[index-1])
             huidige_tafel[index-1]=False
         self.gevonden_sets.append(new_set)
-        for i in range(11,-1,-1):
+        for i in range(len(huidige_tafel)-1,-1,-1):
             if type(huidige_tafel[i])!=Kaart:
                 huidige_tafel.pop(i) 
         
@@ -102,7 +102,7 @@ class Spel:
         index2=huidige_tafel.index(random_set[1])+1
         index3=huidige_tafel.index(random_set[2])+1
         self.verwijder_set(index1, index2, index3, huidige_tafel)
-        self.voeg_kaarten_toe_op_tafel(huidige_tafel)
+        
 
     def verwijder_random_kaarten_op_tafel(self, huidige_tafel):
         gekozen_indices=[]
@@ -123,7 +123,21 @@ class Spel:
         self.voeg_kaarten_toe_op_tafel(huidige_tafel)
         for kaart in verwijderde_kaarten_lijst:
             self.alle_kaarten.append(kaart)
-        
+    def verwijder_eerste_3_kaarten(self, huidige_tafel):
+        gekozen_indices=[0,1,2]
+        verwijderde_kaarten_lijst=[]
+        for index in gekozen_indices:
+            verwijderde_kaarten_lijst.append(huidige_tafel[index])
+            huidige_tafel[index]=False
+        for i in range(2,-1,-1):
+            if type(huidige_tafel[i])!=Kaart:
+                huidige_tafel.pop(i) 
+        print("de verwijderde kaarten zijn: ") 
+        self.print_kaarten(verwijderde_kaarten_lijst)
+        self.voeg_kaarten_toe_op_tafel(huidige_tafel)
+        for kaart in verwijderde_kaarten_lijst:
+            self.alle_kaarten.append(kaart)
+
 def game():
     punten_speler=0
     punten_computer=0
@@ -138,36 +152,60 @@ def game():
         if inputs=="geen set gevonden":
             print("\n \n ")
             if len(SET.controleer_sets(start_tafel))!=0:
-                SET.verwijder_willekeurige_set(start_tafel)
-                punten_computer+=1
-                print("\n")
-                print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
+                if len(SET.alle_kaarten)>0:
+                    SET.verwijder_willekeurige_set(start_tafel)
+                    SET.voeg_kaarten_toe_op_tafel(start_tafel)
+                    punten_computer+=1
+                    print("\n")
+                    print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
+                else:
+                    SET.verwijder_willekeurige_set(start_tafel)
+                    punten_computer+=1
+                    print("\n")
+                    print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
+      
+
             else:
                 print("ik heb geen set gevonden, ik verwijder 3 random kaarten op tafel")
-                SET.verwijder_random_kaarten_op_tafel(start_tafel)
+                SET.verwijder_eerste_3_kaarten(start_tafel)
                 print("\n")
                 print(f"puntenspeler= {punten_speler} & punten computer= {punten_computer}")
-        else: 
-            inputslist=inputs.split(" ")
-            index1=int(inputslist[0])
-            index2=int(inputslist[1])
-            index3=int(inputslist[2])
-            kaart1=start_tafel[index1 - 1]
-            kaart2=start_tafel[index2 - 1]
-            kaart3=start_tafel[index3 - 1]
-            if kaart1.check_3_cards_if_set(kaart2, kaart3):
-                print("de set is goed")
-                SET.verwijder_set(index1, index2,index3, start_tafel)
-                SET.voeg_kaarten_toe_op_tafel(start_tafel)
-                print("\n")
-                punten_speler+=1
-                print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
+        elif len(inputs.split(" "))==3:
+            if type(inputs.split(" ")[0])==int and type(inputs.split(" ")[1])==int and type(inputs.split(" ")[2])==int:
+                if (int(inputs.split(" ")[0]) in range(12)) and (int(inputs.split(" ")[1]) in range(12)) and (int(inputs.split(" ")[2]) in range(12)):
+                    if int(inputs.split(" ")[0])!=int(inputs.split(" ")[1]) and int(inputs.split(" ")[2])!=int(inputs.split(" ")[1]) and int(inputs.split(" ")[0])!=int(inputs.split(" ")[2]):
+                        inputslist=inputs.split(" ")
+                        index1=int(inputslist[0])
+                        index2=int(inputslist[1])
+                        index3=int(inputslist[2])
+                        kaart1=start_tafel[index1 - 1]
+                        kaart2=start_tafel[index2 - 1]
+                        kaart3=start_tafel[index3 - 1]
+                        if kaart1.check_3_cards_if_set(kaart2, kaart3):
+                            print("de set is goed")
+                            SET.verwijder_set(index1, index2,index3, start_tafel)
+                            if len(SET.alle_kaarten)>0:
+                                SET.voeg_kaarten_toe_op_tafel(start_tafel)
+                            print("\n")
+                            punten_speler+=1
+                            print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
+                        else:
+                            print("de set is fout")
+                            print("\n")
+                            print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")  
+                    else:
+                        print("geen geldige input")
+                else:
+                    print("geen geldige input")
             else:
-                print("de set is fout")
-                print("\n")
-                print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
-        if len(SET.controleer_sets(SET.alle_kaarten+start_tafel))==0:
-            x=False
+                print("geen geldige input")
+        else:
+            print("geen geldige input")
+        if len(SET.alle_kaarten+start_tafel)<=20:
+            if len(SET.controleer_sets(SET.alle_kaarten+start_tafel))==0:
+                print("er zijn dit spel geen sets meer mogelijk")
+                x=False
+    print(f"het spel is klaar, de uislag is: punten speler= {punten_speler} & punten computer= {punten_computer}")
 
                 
 

@@ -148,6 +148,7 @@ def game():
         print("\n \n \n De kaarten op tafel zijn:")
         SET.print_kaarten(start_tafel)
         print(f"Er zijn nog {len(SET.alle_kaarten)} kaarten in de pot.")
+        print("type hieronder 'geen set gevonden' als je geen set gevonden hebt. type anders 'kaartnummer1 kaartnummer2 kaartnummer3' ald je denkt dat deze kaartnummers een set vormen(bijvorbeeld '8 4 6' als kaarten 8, 4 en 6 een set vormen)")
         inputs=input()
         if inputs=="geen set gevonden":
             print("\n \n ")
@@ -194,17 +195,19 @@ def game():
                             print("\n")
                             print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")  
                     else:
-                        print("geen geldige input")
+                        print("ongeldig: getallen dubbel genoemd")
                 else:
-                    print("geen geldige input")
+                    print("ongeldig: getallen buiten bereik van 1 tot en met 12")
             else:
-                print("geen geldige input")
+                print("ongeldig: geen geldige zin, of iets anders dan aleen getallen getypt")
         else:
-            print("geen geldige input")
+            print("ongeldig: verkeerde input, misschien bedoel je 'geen set gevonden?'")
         if len(SET.alle_kaarten+start_tafel)<=20:
             if len(SET.controleer_sets(SET.alle_kaarten+start_tafel))==0:
                 print("er zijn dit spel geen sets meer mogelijk")
                 x=False
+        print("klik op enter om door te gaan")
+        input()
     print(f"het spel is klaar, de uislag is: punten speler= {punten_speler} & punten computer= {punten_computer}")
 
                 

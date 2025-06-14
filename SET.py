@@ -1,5 +1,6 @@
 import random
 from itertools import combinations
+
 class Kaart:
     def __init__(self, aantal, kleur, vulling, vorm):
         self.aantal=aantal
@@ -7,10 +8,13 @@ class Kaart:
         self.vulling=vulling
         self.vorm=vorm
     
+    # om de eigenschappen van een kaart te kunnen printen
     def __str__(self):
         return f"{self.aantal}, {self.kleur}, {self.vulling}, {self.vorm}"
     
-    def check_1_eigenschap(self, other_1, other_2, eigenschap):
+    #gegeven een eigenschap, controleer of alle drie de kaarten dezelfde of verschillende waardes hebben. 
+    #Zo ja, dan kan dit een set vormen (return True) en anders geen set vormen (return False)
+    def één_eigenschap_voldoet(self, other_1, other_2, eigenschap):
         kaart1=getattr(self, eigenschap)
         kaart2=getattr(other_1, eigenschap)
         kaart3=getattr(other_2, eigenschap)
@@ -19,19 +23,19 @@ class Kaart:
         else:
             return False
     
-    def check_3_cards_if_set(self, other_1, other_2):
-        bool_list=[]
-        for eigenschap in ["aantal", "kleur", "vulling", "vorm"]:
-            bool_list.append(self.check_1_eigenschap(other_1, other_2, eigenschap))
-        if bool_list==[True , True, True, True]:
-            return True
-        else:
-            return False
-        
-
+    #gegeven een drietal kaarten, controleer of het een set vormt
+    def controleer_set(self, other_1, other_2):
+        eigenschappen = ["aantal", "kleur", "vulling", "vorm"]
+        if self.één_eigenschap_voldoet(other_1, other_2, eigenschappen[0]):
+            if self.één_eigenschap_voldoet(other_1, other_2, eigenschappen[1]):
+                if self.één_eigenschap_voldoet(other_1, other_2, eigenschappen[2]):
+                    if self.één_eigenschap_voldoet(other_1, other_2, eigenschappen[3]):
+                        return True
+        return False        
+    
+    #gelijkheid tussen kaarten controleren
     def __eq__(self, other):
         return (self.aantal == other.aantal and self.kleur == other.kleur and self.vulling == other.vulling and self.vorm == other.vorm)
-    
 
 class Spel:
     def __init__(self, aantallen, kleuren, vullingen, vormen):
@@ -39,183 +43,158 @@ class Spel:
         self.kleuren=kleuren
         self.vullingen=vullingen
         self.vormen=vormen
-
-        kaarten_list=[]
+        
+        #maak een lijst met alle kaarten, die in het begin in de stapel zitten
+        stapel=[]
         for aantal in self.aantallen:
             for kleur in self.kleuren:
                 for vulling in self.vullingen:
                     for vorm in self.vormen:
-                        kaarten_list.append(Kaart(aantal, kleur, vulling, vorm))
-        self.alle_kaarten=kaarten_list
-        self.gevonden_sets=[]
-    
+                        stapel.append(Kaart(aantal, kleur, vulling, vorm))
+        self.stapel=stapel
+
+        #lijst met kaarten op tafel en de gevonden sets
+        self.tafel = []
+        self.alle_sets = []
+
+    #gegeven een lijst met daarin kaarten, print alle kaarten genummerd
     def print_kaarten(self, kaarten_lijst):
         x=1
         for kaart in kaarten_lijst:
             print(f"{x}e kaart:", kaart)
             x+=1
     
+    #print alle gevonden sets
     def print_gevonden_sets(self):
-        for item in self.gevonden_sets:
-            self.print_kaarten(item)
+        for set in self.alle_sets:
+            self.print_kaarten(set)
     
-    def maak_start_tafel(self):
-        actieve_kaarten=[]
+    #maak de eerste tafel met 12 kaarten
+    def initieer_tafel(self):
         for _ in range(12):
-            new_kaart_index=random.choice(range(0,len(self.alle_kaarten)))
-            actieve_kaarten.append(self.alle_kaarten[new_kaart_index])
-            self.alle_kaarten.pop(new_kaart_index)
-        return  actieve_kaarten
+            #kies een index uit de lijst met alle kaarten op de stapel
+            new_kaart_index=random.choice(range(0,len(self.stapel))) 
+            #voeg deze kaart toe aan de tafel
+            self.tafel.append(self.stapel[new_kaart_index])
+            #verwijder deze kaart uit de stapel
+            self.stapel.pop(new_kaart_index)
     
-    def controleer_sets(self, huidige_tafel):
+    #vind alle sets en geef deze terug in een lijst met tuples voor de sets 
+    def vind_sets(self, kaarten):
         gevonden_sets=[]
-        mogelijke_sets=combinations(huidige_tafel,3)
-        for combination in mogelijke_sets:
-            if combination[0].check_3_cards_if_set(combination[1], combination[2]):
+        #maak alle combinaties van kaarten die op tafel liggen
+        alle_combinaties=combinations(kaarten,3)
+        for combination in alle_combinaties:
+            #als de combinatie een set is, voeg hem toe aan de gevonden_sets lisjt
+            if combination[0].controleer_set(combination[1], combination[2]):
                 gevonden_sets.append(combination)
         return gevonden_sets
     
-    def verwijder_set(self, index1, index2, index3, huidige_tafel):
+    #gegeven 3 kaarten die een set vormen, verwijder deze set van de tafel en voeg ze toe aan alle gevonden sets lijst
+    def verwijder_set(self, index1, index2, index3):
         new_set=[]
+        #voeg de kaarten toe aan een nieuwe lijst van deze set
         for index in [index1, index2, index3]:
-            new_set.append(huidige_tafel[index-1])
-            huidige_tafel[index-1]=False
-        self.gevonden_sets.append(new_set)
-        for i in range(len(huidige_tafel)-1,-1,-1):
-            if type(huidige_tafel[i])!=Kaart:
-                huidige_tafel.pop(i) 
-        
-    def voeg_kaarten_toe_op_tafel(self, huidige_tafel):
-        print("de kaarten die nu zijn toegevoegd:")
+            new_set.append(self.tafel[index])
+            self.tafel[index]=False
+        self.alle_sets.append(new_set)
+        #ga van achter naar voren in de lijst om alle False te verwijderen, dus de kaarten die de set vormen verwijderen
+        for i in range(len(self.tafel)-1,-1,-1):
+            if type(self.tafel[i])!=Kaart:
+                self.tafel.pop(i)
+
+    #voeg 3 extra kaarten toe op tafel van de stapel
+    def voeg_kaarten_toe_op_tafel(self):
         for _ in range(3):
-            new_kaart_index=random.choice(range(0,len(self.alle_kaarten)))
-            print(self.alle_kaarten[new_kaart_index])
-            huidige_tafel.append(self.alle_kaarten[new_kaart_index])
-            self.alle_kaarten.pop(new_kaart_index)
+            new_kaart_index=random.choice(range(0,len(self.stapel)))
+            self.tafel.append(self.stapel[new_kaart_index])
+            self.stapel.pop(new_kaart_index)
     
-    def verwijder_willekeurige_set(self, huidige_tafel):
-        random_set=random.choice(self.controleer_sets(huidige_tafel))
-        print("de gevonden set is: ")
-        for kaart in random_set:
-            print(kaart)
-        index1=huidige_tafel.index(random_set[0])+1
-        index2=huidige_tafel.index(random_set[1])+1
-        index3=huidige_tafel.index(random_set[2])+1
-        self.verwijder_set(index1, index2, index3, huidige_tafel)
-        
-    def verwijder_random_kaarten_op_tafel(self, huidige_tafel):
-        gekozen_indices=[]
-        mogelijke_index=list(range(12))
-        verwijderde_kaarten_lijst=[]
-        for _ in range(3):
-            new_index=random.choice(mogelijke_index)
-            gekozen_indices.append(new_index)
-            verwijderde_kaarten_lijst.append(huidige_tafel[new_index])
-            mogelijke_index.remove(new_index)
-        for index in gekozen_indices:
-            huidige_tafel[index]=False
-        for i in range(11,-1,-1):
-            if type(huidige_tafel[i])!=Kaart:
-                huidige_tafel.pop(i) 
-        print("de verwijderde kaarten zijn: ") 
-        self.print_kaarten(verwijderde_kaarten_lijst)
-        self.voeg_kaarten_toe_op_tafel(huidige_tafel)
-        for kaart in verwijderde_kaarten_lijst:
-            self.alle_kaarten.append(kaart)
+    #gegeven de lijst met gevonden sets op tafel, verwijder een willekeurige set
+    def verwijder_willekeurige_set(self, gevonden_sets):
+        random_set=random.choice(gevonden_sets)
+        index1=self.tafel.index(random_set[0])
+        index2=self.tafel.index(random_set[1])
+        index3=self.tafel.index(random_set[2])
+        self.verwijder_set(index1, index2, index3)
 
-    def verwijder_eerste_3_kaarten(self, huidige_tafel):
-        gekozen_indices=[0,1,2]
+    #verwijder de eerste 3 kaarten op tafel
+    def verwijder_eerste_3_kaarten_op_tafel(self):
+        #we willen de kaarten die we verwijderen van de tafel opnieuw toevoegen 
+        # aan de stapel, nadat we nieuwe kaarten hebben gepakt
         verwijderde_kaarten_lijst=[]
-        for index in gekozen_indices:
-            verwijderde_kaarten_lijst.append(huidige_tafel[index])
-            huidige_tafel[index]=False
-        for i in range(2,-1,-1):
-            if type(huidige_tafel[i])!=Kaart:
-                huidige_tafel.pop(i) 
-        print("de verwijderde kaarten zijn: ") 
-        self.print_kaarten(verwijderde_kaarten_lijst)
-        self.voeg_kaarten_toe_op_tafel(huidige_tafel)
+        #we willen de kaarten op indices 0,1,2 verwijderen
+        for index in [2,1,0]:
+            verwijderde_kaarten_lijst.append(self.tafel[index])
+            self.tafel.pop(index) 
+        #voeg nieuwe kaarten toe op tafel, aan het einde van de huidige tafel
+        self.voeg_kaarten_toe_op_tafel()
+        #voeg de verwijderde kaarten opnieuwe toe aan de stapel
         for kaart in verwijderde_kaarten_lijst:
-            self.alle_kaarten.append(kaart)
+            self.stapel.append(kaart)
 
-def game():
-    punten_speler=0
-    punten_computer=0
-    SET=Spel([1,2,3], ["rood", "groen", "paars"], ["leeg", "gestreept", "vol"], ["ovaal", "ruit", "golf"])
-    start_tafel=SET.maak_start_tafel()
-    x=True
-    while x:
-        print("\n \n \n De kaarten op tafel zijn:")
-        SET.print_kaarten(start_tafel)
-        print(f"Er zijn nog {len(SET.alle_kaarten)} kaarten in de pot.")
-        print("type hieronder 'geen set gevonden' als je geen set gevonden hebt. type anders 'kaartnummer1 kaartnummer2 kaartnummer3' ald je denkt dat deze kaartnummers een set vormen(bijvorbeeld '8 4 6' als kaarten 8, 4 en 6 een set vormen)")
+    def inputs(self):
         inputs=input()
         if inputs=="geen set gevonden":
-            print("\n \n ")
-            if len(SET.controleer_sets(start_tafel))!=0:
-                if len(SET.alle_kaarten)>0:
-                    SET.verwijder_willekeurige_set(start_tafel)
-                    SET.voeg_kaarten_toe_op_tafel(start_tafel)
-                    punten_computer+=1
-                    print("\n")
-                    print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
-                else:
-                    SET.verwijder_willekeurige_set(start_tafel)
-                    punten_computer+=1
-                    print("\n")
-                    print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
-      
-
-            else:
-                print("ik heb geen set gevonden, ik verwijder 3 random kaarten op tafel")
-                SET.verwijder_eerste_3_kaarten(start_tafel)
-                print("\n")
-                print(f"puntenspeler= {punten_speler} & punten computer= {punten_computer}")
+            return "geen set gevonden"
         elif len(inputs.split(" "))==3:
             try:
                 int(inputs.split(" ")[0]) and int(inputs.split(" ")[1]) and int(inputs.split(" ")[2])
-                if (int(inputs.split(" ")[0]) in range(12)) and (int(inputs.split(" ")[1]) in range(12)) and (int(inputs.split(" ")[2]) in range(12)):
+                if (int(inputs.split(" ")[0]) in range(1,13)) and (int(inputs.split(" ")[1]) in range(1,13)) and (int(inputs.split(" ")[2]) in range(1,13)):
                     if int(inputs.split(" ")[0])!=int(inputs.split(" ")[1]) and int(inputs.split(" ")[2])!=int(inputs.split(" ")[1]) and int(inputs.split(" ")[0])!=int(inputs.split(" ")[2]):
                         inputslist=inputs.split(" ")
-                        index1=int(inputslist[0])
-                        index2=int(inputslist[1])
-                        index3=int(inputslist[2])
-                        kaart1=start_tafel[index1 - 1]
-                        kaart2=start_tafel[index2 - 1]
-                        kaart3=start_tafel[index3 - 1]
-                        if kaart1.check_3_cards_if_set(kaart2, kaart3):
-                            print("de set is goed")
-                            SET.verwijder_set(index1, index2,index3, start_tafel)
-                            if len(SET.alle_kaarten)>0:
-                                SET.voeg_kaarten_toe_op_tafel(start_tafel)
-                            print("\n")
-                            punten_speler+=1
-                            print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
-                        else:
-                            print("de set is fout")
-                            print("\n")
-                            print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")  
-                    else:
-                        print("ongeldig: getallen dubbel genoemd")
-                else:
-                    print("ongeldig: getallen buiten bereik van 1 tot en met 12")
+                        index1=int(inputslist[0])-1
+                        index2=int(inputslist[1])-1
+                        index3=int(inputslist[2])-1
+                        return (index1, index2, index3)
+                    return "ERROR: dezelfde getallen ingegeven"
+                return "ERROR: te grote of te kleine getallen ingegeven. type in 1t/m 12"
             except:
-                print("er zit een letter of een decimaal getal bij")
+                return "ERROR: geen geldige input, bedoel je 'geen set gevonden' of bijvoorbeeld '1,2,3' voor kaarten 1, 2 en 3?"
         else:
-            print("ongeldig: verkeerde input, misschien bedoel je 'geen set gevonden?'")
-        if len(SET.alle_kaarten+start_tafel)<=20:
-            if len(SET.controleer_sets(SET.alle_kaarten+start_tafel))==0:
-                print("er zijn dit spel geen sets meer mogelijk")
-                x=False
-        print("klik op enter om door te gaan")
-        input()
-    print(f"het spel is klaar, de uislag is: punten speler= {punten_speler} & punten computer= {punten_computer}")
+            return "ERROR: geen geldige input, bedoel je 'geen set gevonden' of bijvoorbeeld '1,2,3' voor kaarten 1, 2 en 3?"
+                    
+class Speler:
+    def __init__(self, naam):
+        self.naam=naam
+        self.punten=0
+        self.sets=[]
+    
+def game():
+    speler1=Speler("guest")
+    computer=Speler("computer")
+    SET=Spel([1,2,3], ["green", "purple", "red"], ["shaded", "filled", "empty"], ["oval", "squiggle", "diamond"])
+    SET.initieer_tafel()
+    game_active=True
+    input_variable=SET.inputs()
+    while game_active:
+        if input_variable=="geen set gevonden":
+            gevonden_sets=SET.vind_sets(SET.tafel)
+            if len(gevonden_sets)!=0:
+                    SET.verwijder_willekeurige_set(gevonden_sets)
+                    computer.punten+=1
+                    if len(SET.stapel)>0:
+                        SET.voeg_kaarten_toe_op_tafel()
+            else:
+                SET.verwijder_eerste_3_kaarten_op_tafel()
+        elif type(input_variable)==tuple:
+            index1, index2, index3=input_variable           
+            kaart1=SET.tafel[index1]
+            kaart2=SET.tafel[index2]
+            kaart3=SET.tafel[index3]
+            if kaart1.controleer_set(kaart2, kaart3):
+                SET.verwijder_set(index1, index2, index3)
+                speler1.punten+=1
+                if len(SET.stapel)>0:
+                    SET.voeg_kaarten_toe_op_tafel()            
+        if len(SET.stapel+SET.tafel)<=20:
+            if len(SET.vind_sets(SET.stapel+SET.tafel))==0:
+                game_active=False
 
 def main():
     game()
 if __name__=="__main__":
     main()
-
     
 
   

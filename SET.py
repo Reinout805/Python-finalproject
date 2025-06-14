@@ -103,7 +103,6 @@ class Spel:
         index3=huidige_tafel.index(random_set[2])+1
         self.verwijder_set(index1, index2, index3, huidige_tafel)
         
-
     def verwijder_random_kaarten_op_tafel(self, huidige_tafel):
         gekozen_indices=[]
         mogelijke_index=list(range(12))
@@ -123,6 +122,7 @@ class Spel:
         self.voeg_kaarten_toe_op_tafel(huidige_tafel)
         for kaart in verwijderde_kaarten_lijst:
             self.alle_kaarten.append(kaart)
+
     def verwijder_eerste_3_kaarten(self, huidige_tafel):
         gekozen_indices=[0,1,2]
         verwijderde_kaarten_lijst=[]
@@ -172,7 +172,8 @@ def game():
                 print("\n")
                 print(f"puntenspeler= {punten_speler} & punten computer= {punten_computer}")
         elif len(inputs.split(" "))==3:
-            if type(inputs.split(" ")[0])==int and type(inputs.split(" ")[1])==int and type(inputs.split(" ")[2])==int:
+            try:
+                int(inputs.split(" ")[0]) and int(inputs.split(" ")[1]) and int(inputs.split(" ")[2])
                 if (int(inputs.split(" ")[0]) in range(12)) and (int(inputs.split(" ")[1]) in range(12)) and (int(inputs.split(" ")[2]) in range(12)):
                     if int(inputs.split(" ")[0])!=int(inputs.split(" ")[1]) and int(inputs.split(" ")[2])!=int(inputs.split(" ")[1]) and int(inputs.split(" ")[0])!=int(inputs.split(" ")[2]):
                         inputslist=inputs.split(" ")
@@ -198,8 +199,8 @@ def game():
                         print("ongeldig: getallen dubbel genoemd")
                 else:
                     print("ongeldig: getallen buiten bereik van 1 tot en met 12")
-            else:
-                print("ongeldig: geen geldige zin, of iets anders dan aleen getallen getypt")
+            except:
+                print("er zit een letter of een decimaal getal bij")
         else:
             print("ongeldig: verkeerde input, misschien bedoel je 'geen set gevonden?'")
         if len(SET.alle_kaarten+start_tafel)<=20:
@@ -209,9 +210,6 @@ def game():
         print("klik op enter om door te gaan")
         input()
     print(f"het spel is klaar, de uislag is: punten speler= {punten_speler} & punten computer= {punten_computer}")
-
-                
-
 
 def main():
     game()

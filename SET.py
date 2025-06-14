@@ -133,82 +133,63 @@ class Spel:
         for kaart in verwijderde_kaarten_lijst:
             self.stapel.append(kaart)
 
-
-
-
-def game():
-    punten_speler=0
-    punten_computer=0
-    SET=Spel([1,2,3], ["rood", "groen", "paars"], ["leeg", "gestreept", "vol"], ["ovaal", "ruit", "golf"])
-    SET.initieer_tafel()
-    x=True
-    while x:
-        print("\n \n \n De kaarten op tafel zijn:")
-        SET.print_kaarten(SET.tafel)
-        print(f"Er zijn nog {len(SET.stapel)} kaarten in de pot.")
-        print("type hieronder 'geen set gevonden' als je geen set gevonden hebt. type anders 'kaartnummer1 kaartnummer2 kaartnummer3' ald je denkt dat deze kaartnummers een set vormen(bijvorbeeld '8 4 6' als kaarten 8, 4 en 6 een set vormen)")
+    def inputs(self):
         inputs=input()
         if inputs=="geen set gevonden":
-            print("\n \n ")
-            gevonden_sets=SET.vind_sets(SET.tafel)
-            if len(gevonden_sets)!=0:
-                if len(SET.stapel)>0:
-                    SET.verwijder_willekeurige_set(gevonden_sets)
-                    SET.voeg_kaarten_toe_op_tafel()
-                    punten_computer+=1
-                    print("\n")
-                    print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
-                else:
-                    SET.verwijder_willekeurige_set(gevonden_sets)
-                    punten_computer+=1
-                    print("\n")
-                    print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
-      
-
-            else:
-                print("ik heb geen set gevonden, ik verwijder 3 random kaarten op tafel")
-                SET.verwijder_eerste_3_kaarten_op_tafel()
-                print("\n")
-                print(f"puntenspeler= {punten_speler} & punten computer= {punten_computer}")
+            return "geen set gevonden"
         elif len(inputs.split(" "))==3:
             try:
                 int(inputs.split(" ")[0]) and int(inputs.split(" ")[1]) and int(inputs.split(" ")[2])
-                if (int(inputs.split(" ")[0]) in range(12)) and (int(inputs.split(" ")[1]) in range(12)) and (int(inputs.split(" ")[2]) in range(12)):
+                if (int(inputs.split(" ")[0]) in range(1,13)) and (int(inputs.split(" ")[1]) in range(1,13)) and (int(inputs.split(" ")[2]) in range(1,13)):
                     if int(inputs.split(" ")[0])!=int(inputs.split(" ")[1]) and int(inputs.split(" ")[2])!=int(inputs.split(" ")[1]) and int(inputs.split(" ")[0])!=int(inputs.split(" ")[2]):
                         inputslist=inputs.split(" ")
                         index1=int(inputslist[0])-1
                         index2=int(inputslist[1])-1
                         index3=int(inputslist[2])-1
-                        kaart1=SET.tafel[index1]
-                        kaart2=SET.tafel[index2]
-                        kaart3=SET.tafel[index3]
-                        if kaart1.controleer_set(kaart2, kaart3):
-                            print("de set is goed")
-                            SET.verwijder_set(index1, index2, index3)
-                            if len(SET.stapel)>0:
-                                SET.voeg_kaarten_toe_op_tafel()
-                            print("\n")
-                            punten_speler+=1
-                            print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")
-                        else:
-                            print("de set is fout")
-                            print("\n")
-                            print(f"punten speler= {punten_speler} & punten computer= {punten_computer}")  
-                    else:
-                        print("ongeldig: getallen dubbel genoemd")
-                else:
-                    print("ongeldig: getallen buiten bereik van 1 tot en met 12")
+                        return (index1, index2, index3)
+                    return "ERROR: dezelfde getallen ingegeven"
+                return "ERROR: te grote of te kleine getallen ingegeven. type in 1t/m 12"
             except:
-                print("er zit een letter of een decimaal getal bij")
+                return "ERROR: geen geldige input, bedoel je 'geen set gevonden' of bijvoorbeeld '1,2,3' voor kaarten 1, 2 en 3?"
         else:
-            print("ongeldig: verkeerde input, misschien bedoel je 'geen set gevonden?'")
+            return "ERROR: geen geldige input, bedoel je 'geen set gevonden' of bijvoorbeeld '1,2,3' voor kaarten 1, 2 en 3?"
+                    
+class Speler:
+    def __init__(self, naam):
+        self.naam=naam
+        self.punten=0
+        self.sets=[]
+    
+def game():
+    speler1=Speler("guest")
+    computer=Speler("computer")
+    SET=Spel([1,2,3], ["green", "purple", "red"], ["shaded", "filled", "empty"], ["oval", "squiggle", "diamond"])
+    SET.initieer_tafel()
+    game_active=True
+    input_variable=SET.inputs()
+    while game_active:
+        if input_variable=="geen set gevonden":
+            gevonden_sets=SET.vind_sets(SET.tafel)
+            if len(gevonden_sets)!=0:
+                    SET.verwijder_willekeurige_set(gevonden_sets)
+                    computer.punten+=1
+                    if len(SET.stapel)>0:
+                        SET.voeg_kaarten_toe_op_tafel()
+            else:
+                SET.verwijder_eerste_3_kaarten_op_tafel()
+        elif type(input_variable)==tuple:
+            index1, index2, index3=input_variable           
+            kaart1=SET.tafel[index1]
+            kaart2=SET.tafel[index2]
+            kaart3=SET.tafel[index3]
+            if kaart1.controleer_set(kaart2, kaart3):
+                SET.verwijder_set(index1, index2, index3)
+                speler1.punten+=1
+                if len(SET.stapel)>0:
+                    SET.voeg_kaarten_toe_op_tafel()            
         if len(SET.stapel+SET.tafel)<=20:
             if len(SET.vind_sets(SET.stapel+SET.tafel))==0:
-                print("er zijn dit spel geen sets meer mogelijk")
-                x=False
-        print("klik op enter om door te gaan")
-        input()
-    print(f"het spel is klaar, de uislag is: punten speler= {punten_speler} & punten computer= {punten_computer}")
+                game_active=False
 
 def main():
     game()

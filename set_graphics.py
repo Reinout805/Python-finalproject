@@ -7,12 +7,12 @@ pygame.init()
 pygame.font.init()
 
 selected_cards = []
-SCREEN_WIDTH, SCREEN_HEIGHT = 1024, 768
+SCREEN_WIDTH, SCREEN_HEIGHT = 1024, 728
 FPS = 60
 FONT = pygame.font.SysFont('Arial', 24)
 BIG_FONT = pygame.font.SysFont('Arial', 36)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ASSET_PATH = os.path.join(BASE_DIR, "cards")
+ASSET_PATH = os.path.join(BASE_DIR, "kaarten")
 
 WHITE = (255, 255, 255)
 GRAY = (150, 150, 150)
@@ -21,7 +21,7 @@ GREEN = (50, 200, 50)
 BLACK = (0, 0, 0)
 BLUE = (50, 50, 200)
 
-CARD_WIDTH, CARD_HEIGHT = 200, 120
+CARD_WIDTH, CARD_HEIGHT = 100, 200
 card_images = {}
 
 # UI States
@@ -63,7 +63,7 @@ def load_card_images():
                     path = os.path.join(ASSET_PATH, f"{cl}{sh}{fi}{nu}.gif")
                     if os.path.exists(path):
                         img = pygame.image.load(path)
-                        img = pygame.transform.scale(img, (CARD_WIDTH, CARD_HEIGHT))
+                        img = pygame.transform.rotozoom(pygame.transform.scale(img, (CARD_WIDTH, CARD_HEIGHT)),90,1)
                         card_images[f"{cl}{sh}{fi}{nu}"] = img
                     else:
                         print(f"Missing: {path}")
@@ -73,16 +73,24 @@ load_card_images()
 def next_green(spel, tafel, lijst):
     spel.verwijder_set(*lijst, tafel)
     spel.voeg_kaarten_toe_op_tafel(tafel)
+    global selected_cards
+    selected_cards=[]
     return tafel
 
 def next_red(spel, tafel):
-    spel.verwijder_willekeurige_set(tafel)
-    spel.voeg_kaarten_toe_op_tafel(tafel)
+    if len(spel.controleer_sets(tafel))!=0:
+        spel.verwijder_willekeurige_set(tafel)
+        spel.voeg_kaarten_toe_op_tafel(tafel)
+    else:
+        pass
+    global selected_cards
+    selected_cards=[]
     return tafel
 
 def next_grey(spel, tafel):
     spel.verwijder_eerste_3_kaarten(tafel)
-    spel.voeg_kaarten_toe_op_tafel(tafel)
+    global selected_cards
+    selected_cards=[]
     return tafel
 
 class Button:
@@ -150,13 +158,13 @@ def game_screen():
         key = str(card)
         if key in card_images:
             screen.blit(card_images[key], (x, y))
-            index_txt = FONT.render(str(i), True, BLACK)
-            screen.blit(index_txt, (x + CARD_WIDTH // 2 - 10, y - 15))
+            index_txt = FONT.render(str(i+1), True, BLACK)
+            screen.blit(index_txt, (x + CARD_WIDTH // 2 - 10, y - 25))
         else:
             pygame.draw.rect(screen, GRAY, (x, y, CARD_WIDTH, CARD_HEIGHT))
             screen.blit(FONT.render("?", True, BLACK), (x + 90, y + 50))
         if i in selected_cards:
-            pygame.draw.rect(screen, BLUE, (x, y, CARD_WIDTH, CARD_HEIGHT), 4)
+            pygame.draw.rect(screen, BLUE, (x, y,CARD_HEIGHT , CARD_WIDTH), 4)
 
     screen.blit(FONT.render(f"Time: {int(round_timer)}s", True, BLACK), (SCREEN_WIDTH // 2 - 50, 20))
     screen.blit(FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK), (SCREEN_WIDTH - 250, 20))
@@ -180,13 +188,15 @@ def green_screen():
 def continue_from_green():
     global player_score, cards_on_table, round_timer
     player_score += 1
-    cards_on_table = next_green(S, cards_on_table, selected_cards)
+    cards_on_table = next_green(S, cards_on_table, [item+1 for item in selected_cards])
     round_timer = get_timer_for_difficulty()
     change_state(GAME)
 
 def red_screen():
     screen.fill(RED)
     msg = BIG_FONT.render("Wrong!", True, BLACK)
+    global input_text
+    input_text=""
     screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 200))
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), "Continue", continue_from_red)
     continue_btn.draw(screen)
@@ -237,7 +247,12 @@ while running:
         round_timer -= 1 / FPS
         total_elapsed_time += 1 / FPS
         if round_timer <= 0:
-            change_state(RED_SCREEN)
+            if len(S.controleer_sets(cards_on_table))!=0:
+                change_state(RED_SCREEN)
+                selected_cards=[]
+            else:
+                change_state(GREY_SCREEN)
+                selected_cards=[]
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -246,16 +261,17 @@ while running:
             button.handle_event(event)
         if event.type == pygame.KEYDOWN and state == GAME:
             indices = list(map(int, input_text.strip().split()))
-            selected_cards = indices
+            selected_cards = [index-1 for index in indices]
             if event.key == pygame.K_RETURN:
                 try:
                     if len(indices) == 3 and len(set(indices)) == 3:
-                        selected = [cards_on_table[i] for i in indices]
+                        selected = [cards_on_table[i] for i in selected_cards]
                         print(selected)
                         for card in selected:
                             print(card, card.kleur, card.vorm, card.vulling, card.aantal, type(card.aantal))
                         if selected[0].check_3_cards_if_set(selected[1], selected[2]):
-                            selected_cards = indices
+                            selected = indices
+                            print(selected_cards)
                             change_state(GREEN_SCREEN)
                         else:
                             change_state(RED_SCREEN)

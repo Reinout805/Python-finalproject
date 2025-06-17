@@ -63,35 +63,13 @@ def load_card_images():
                     path = os.path.join(ASSET_PATH, f"{cl}{sh}{fi}{nu}.gif")
                     if os.path.exists(path):
                         img = pygame.image.load(path)
-                        img = pygame.transform.rotozoom(pygame.transform.scale(img, (CARD_WIDTH, CARD_HEIGHT)),90,1)
+                        img = pygame.transform.scale(img, (CARD_WIDTH, CARD_HEIGHT))
+                        img = pygame.transform.rotozoom(img, 90, 1)
                         card_images[f"{cl}{sh}{fi}{nu}"] = img
                     else:
                         print(f"Missing: {path}")
 
 load_card_images()
-
-def next_green(spel, tafel, lijst):
-    spel.verwijder_set(*lijst, tafel)
-    spel.voeg_kaarten_toe_op_tafel(tafel)
-    global selected_cards
-    selected_cards=[]
-    return tafel
-
-def next_red(spel, tafel):
-    if len(spel.controleer_sets(tafel))!=0:
-        spel.verwijder_willekeurige_set(tafel)
-        spel.voeg_kaarten_toe_op_tafel(tafel)
-    else:
-        pass
-    global selected_cards
-    selected_cards=[]
-    return tafel
-
-def next_grey(spel, tafel):
-    spel.verwijder_eerste_3_kaarten(tafel)
-    global selected_cards
-    selected_cards=[]
-    return tafel
 
 class Button:
     def __init__(self, rect, text, callback):
@@ -186,9 +164,11 @@ def green_screen():
     buttons.append(continue_btn)
 
 def continue_from_green():
-    global player_score, cards_on_table, round_timer
+    global player_score, cards_on_table, round_timer, selected_cards
     player_score += 1
-    cards_on_table = next_green(S, cards_on_table, [item+1 for item in selected_cards])
+    S.verwijder_set(*[item+1 for item in selected_cards], cards_on_table)
+    S.voeg_kaarten_toe_op_tafel(cards_on_table)
+    selected_cards=[]
     round_timer = get_timer_for_difficulty()
     change_state(GAME)
 
@@ -204,9 +184,14 @@ def red_screen():
     buttons.append(continue_btn)
 
 def continue_from_red():
-    global computer_score, cards_on_table, round_timer
+    global computer_score, cards_on_table, round_timer, selected_cards
     computer_score += 1
-    cards_on_table = next_red(S, cards_on_table)
+    if len(S.controleer_sets(cards_on_table))!=0:
+        S.verwijder_willekeurige_set(cards_on_table)
+        S.voeg_kaarten_toe_op_tafel(cards_on_table)
+    else:
+        pass
+    selected_cards=[]
     round_timer = get_timer_for_difficulty()
     change_state(GAME)
 
@@ -220,8 +205,9 @@ def grey_screen():
     buttons.append(continue_btn)
 
 def continue_from_grey():
-    global cards_on_table, round_timer
-    cards_on_table = next_grey(S, cards_on_table)
+    global cards_on_table, round_timer, selected_cards
+    S.verwijder_eerste_3_kaarten(cards_on_table)
+    selected_cards=[]
     round_timer = get_timer_for_difficulty()
     change_state(GAME)
 
@@ -282,7 +268,6 @@ while running:
                 input_text = input_text[:-1]
             else:
                 input_text += event.unicode
-
     if state == START:
         buttons = [
             Button((400, 200, 200, 50), "Easy", lambda: set_difficulty("Easy")),

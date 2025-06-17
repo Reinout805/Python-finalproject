@@ -23,7 +23,6 @@ class Kaart:
     def __eq__(self, other):
         return (self.aantal == other.aantal and self.kleur == other.kleur and self.vulling == other.vulling and self.vorm == other.vorm)
 
-
 class Spel:
     def __init__(self, kleuren, vormen, vullingen, aantallen):
         self.kleuren = kleuren

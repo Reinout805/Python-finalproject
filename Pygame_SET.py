@@ -217,12 +217,6 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
-    if game_start:
-        pass
-    if game_play:
-        pass
-    if game_end:
-        pass
 
     print_alle_kaart(SET.tafel)
     pygame.display.update()

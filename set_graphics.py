@@ -68,7 +68,7 @@ def load_card_images():
 load_card_images()
 
 def init_game():
-    global player_score, computer_score, S, cards_on_table, deck_count, input_text, total_elapsed_time, difficulty
+    global player_score, computer_score, S, cards_on_table, deck_count, input_text, total_elapsed_time, difficulty, fastest_set
     player_score = 0
     computer_score = 0
     S = Spel(["green", "purple", "red"], ["oval", "diamond", "squiggle"], ["empty", "shaded", "filled"], ["1", "2", "3"])
@@ -77,6 +77,7 @@ def init_game():
     input_text = ""
     total_elapsed_time = 0
     difficulty = "Medium"
+    fastest_set=-1
 
 init_game()
 
@@ -187,6 +188,10 @@ def game_screen():
     screen.blit(FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK), (SCREEN_WIDTH - 250, 20))
     screen.blit(FONT.render(f"Computer Score: {computer_score}", True, BLACK), (750, SCREEN_HEIGHT - 50))
     screen.blit(FONT.render(f"Player Score: {player_score}", True, BLACK), (50, SCREEN_HEIGHT - 50))
+    if fastest_set>0:
+        screen.blit(FONT.render(f"Fastest set: {round(fastest_set,1)}", True, BLACK), (50, SCREEN_HEIGHT - 90))
+    else:
+        screen.blit(FONT.render(f"Fastest set: -", True, BLACK), (50, SCREEN_HEIGHT - 90))
 
     input_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 60, 200, 40)
     pygame.draw.rect(screen, GRAY, input_rect)
@@ -194,6 +199,7 @@ def game_screen():
     screen.blit(txt_surface, (input_rect.x + 5, input_rect.y + 5))
 
 def green_screen():
+    global fastest_set
     screen.fill(GREEN)
     msg = BIG_FONT.render("Correct Set!", True, BLACK)
     screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 200))
@@ -201,14 +207,25 @@ def green_screen():
     continue_btn.draw(screen)
     buttons.clear()
     buttons.append(continue_btn)
-    text = FONT.render(f"Time needed: {round(round_timer, 1)}s", True, BLACK)
+    new_time=get_timer_for_difficulty()-round_timer
+    if fastest_set==-1:
+        fastest_set=new_time
+    if fastest_set>new_time:
+        fastest_set=new_time
+    text = FONT.render(f"Time used: {round(new_time, 1)}s", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 250))
+    if fastest_set>0:
+        text = FONT.render(f"Fastest set: {round(fastest_set, 1)}s", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+    else:
+        text = FONT.render(f"Fastest set: -", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
     text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 340))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
     text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 310))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 340))
     text = FONT.render(f"Player Score: {player_score}", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 310))
 
 def continue_from_green():
     global cards_on_table, round_timer, choosen_indices, selected_cards
@@ -227,14 +244,20 @@ def red_screen():
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Continue", continue_from_red)
     continue_btn.draw(screen)
     buttons.clear()
-    text = FONT.render(f"Time needed: {round(round_timer, 1)}s", True, BLACK)
+    if fastest_set>0:
+        text = FONT.render(f"Fastest set: {round(fastest_set, 1)}s", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+    else:
+        text = FONT.render(f"Fastest set: -", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+    text = FONT.render(f"Time used: {round(get_timer_for_difficulty()-round_timer, 1)}s", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 250))
     text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 340))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
     text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 310))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 340))
     text = FONT.render(f"Player Score: {player_score}", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 310))
     buttons.append(continue_btn)
 
 def continue_from_red():
@@ -257,7 +280,7 @@ def time_screen(gevonden_set):
     msg = BIG_FONT.render("TIME IS OVER!", True, BLACK)
     for i, card in enumerate(gevonden_set):
         x = SCREEN_WIDTH//2 + (i % 4) * 220 -320
-        y = 290
+        y = 260
         key = str(card)
         if key in card_images:
             screen.blit(card_images[key], (x, y))
@@ -266,12 +289,18 @@ def time_screen(gevonden_set):
             screen.blit(FONT.render("UNKNOWN CARD", True, BLACK), (x + 90, y + 50))
     global input_text
     input_text=""
-    screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 200))
+    screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 170))
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Continue", continue_from_time)
     continue_btn.draw(screen)
     buttons.clear()
     text = FONT.render(f"The computer found this set:", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 250))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 220))
+    if fastest_set>0:
+        text = FONT.render(f"Fastest set: {round(fastest_set, 1)}s", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
+    else:
+        text = FONT.render(f"Fastest set: -", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
     text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 460))
     text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
@@ -309,10 +338,15 @@ def end_screen():
     under_title = FONT.render("There are no sets possible anymore", True, BLACK)
     score_text = FONT.render(f"Final Score — Player: {player_score} | Computer: {computer_score}", True, BLACK)
     time_text = FONT.render(f"Total Time: {int(total_elapsed_time)} seconds", True, BLACK)
+    if fastest_set>0:
+        fasttime_text = FONT.render(f"Fastest set in {round(fastest_set,1)} seconds", True, BLACK)
+    else:
+        fasttime_text = FONT.render(f"Fastest set: -", True, BLACK)
     screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, 150))
     screen.blit(under_title, (SCREEN_WIDTH // 2 - under_title.get_width() // 2, 190))
     screen.blit(score_text, (SCREEN_WIDTH // 2 - score_text.get_width() // 2, 250))
-    screen.blit(time_text, (SCREEN_WIDTH // 2 - time_text.get_width() // 2, 300))
+    screen.blit(time_text, (SCREEN_WIDTH // 2 - time_text.get_width() // 2, 360))
+    screen.blit(fasttime_text, (SCREEN_WIDTH // 2 - time_text.get_width() // 2, 280))
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Back to Menu", lambda: (change_state(START), init_game()))
     continue_btn.draw(screen)
     buttons.clear()

@@ -73,7 +73,7 @@ class Spel:
         random_set = random.choice(self.controleer_sets(huidige_tafel))
         indices = [huidige_tafel.index(k) + 1 for k in random_set]
         self.verwijder_set(*indices, huidige_tafel)
-        return huidige_tafel
+        return huidige_tafel, random_set
 
     def verwijder_eerste_3_kaarten(self, huidige_tafel):
         verwijderde_kaarten = huidige_tafel[:3]

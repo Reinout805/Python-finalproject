@@ -54,6 +54,22 @@ class Spel:
     def controleer_sets(self, huidige_tafel):
         return [combo for combo in combinations(huidige_tafel, 3) if combo[0].check_3_cards_if_set(combo[1], combo[2])]
 
+    def all_cards_not_in_sets(self, huidige_tafel):
+        found_sets=self.controleer_sets(huidige_tafel)
+        cards=[]
+        index=[]
+        correct_index=list(range(12))
+        if len(found_sets)>0:
+            for i in range(len(found_sets)):
+                for j in range(3):
+                    if found_sets[i][j] not in cards:
+                        cards.append(found_sets[i][j])
+        for card in cards:
+            index.append(huidige_tafel.index(card))
+        for id in index:
+            correct_index.remove(id)
+        return correct_index
+
     def verwijder_set(self, index1, index2, index3, huidige_tafel):
         new_set = [huidige_tafel[i - 1] for i in [index1, index2, index3]]
         self.gevonden_sets.append(new_set)

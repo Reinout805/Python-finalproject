@@ -1,4 +1,5 @@
 import pygame
+import random
 import sys
 import os
 from set import Kaart, Spel
@@ -23,14 +24,18 @@ GREEN = (50, 200, 50)
 GREEN2=(15, 122, 53)
 BLACK = (0, 0, 0)
 BLUE = (50, 50, 200)
+wait_cheat=0
+wait_pauze=0
 
 CARD_WIDTH, CARD_HEIGHT = 100, 200
 card_images = {}
 warning=""
-
+cheat_cards=[]
+cheat_amout=0
+not_in_set_cards=[]
 # UI States
 START, RULES, GAME, GREEN_SCREEN, RED_NO_SET_SCREEN, RED_SCREEN, TIME_OVER, GREY_SCREEN, NO_SET_CORRECT, NO_SET_INCORRECT, END = range(11)
-state = END
+state = START
 state_functions = {
     START: lambda: start_screen(),
     RULES: lambda: rules_screen(),
@@ -55,18 +60,52 @@ clock = pygame.time.Clock()
 # Variabelen
 time_easy = 60
 time_medium = 30
-time_hard=1
+time_hard=15
 round_timer = 30
 
 def print_warning(text):
     global warning
     warning=text
-def pauze_change():
-    global Pauze
-    if Pauze==False:
-        Pauze=True
+def pauze_change(text=""):
+    global wait_pauze, Pauze
+    if text=="click":
+        if wait_pauze<=0:
+            if Pauze==False:
+                Pauze=True
+            else:
+                Pauze=False
+            wait_pauze=1/30
     else:
-        Pauze=False
+        if Pauze==False:
+            Pauze=True
+        else:
+            Pauze=False
+
+def cheat(text=""):
+    global cheat_cards, not_in_set_cards, cheat_amount, round_timer, wait_cheat
+    if Pauze==False:
+        if text=="click":
+            if wait_cheat<=0:
+                cheat_amount+=1
+                x=random.choice(not_in_set_cards)
+                cheat_cards.append(x)
+                not_in_set_cards.remove(x)
+                if round_timer>=5:
+                    round_timer-=5
+                else:
+                    round_timer=0
+                wait_cheat=1/30
+        else: 
+            cheat_amount+=1
+            x=random.choice(not_in_set_cards)
+            cheat_cards.append(x)
+            not_in_set_cards.remove(x)
+            if round_timer>=5:
+                round_timer-=5
+            else:
+                round_timer=0
+
+
 
 def get_timer_for_difficulty():
     if difficulty == "Easy":
@@ -123,7 +162,7 @@ class Button:
         surface.blit(txt, (self.rect.x + 10, self.rect.y + 10))
     
     def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.type == pygame.MOUSEBUTTONUP:
             if self.rect.collidepoint(event.pos):
                 self.callback()
 
@@ -142,8 +181,12 @@ def set_difficulty(level):
     difficulty = level
 
 def change_state(new_state):
-    global state
+    global state, not_in_set_cards, cheat_cards, cheat_amount
     state = new_state
+    if state==GAME:
+        cheat_cards = []
+        cheat_amount=0
+        not_in_set_cards=S.all_cards_not_in_sets(cards_on_table)
     buttons.clear()
 
 def start_game():
@@ -187,8 +230,11 @@ def rules_screen():
         "- A valid set has all the same or all different features",
         "INPUT:",
         "- Input your set in the format: 0 1 2 (card indices)",
-        "- Select 'No set possible' or press 'n' on keyboard when you think that no sets are possible",
-        "- Select 'Begin/End break' or press 'p' on keyboard to start/end the break",
+        "- Select 'No set possible' or press 'n' when you think that no sets are possible",
+        "- Select 'Begin/End break' or press 'p' to start/end the break",
+        "- Select 'Hide a card' or press 'h' to hide a card which is not in any possible set:",
+        "               - you lose 5 seconds!",
+        "               - maximum of 6 hide's per round",
         "POINTS:",
         "- You CORRECTLY identified a set: you get 1 point",
         "- You INCORRETLY identified a set: computer gets 1 point",
@@ -201,7 +247,7 @@ def rules_screen():
     ]
     for i, line in enumerate(rules):
         txt = FONT.render(line, True, BLACK)
-        screen.blit(txt, (50, 50 + i * 40))
+        screen.blit(txt, (5, 5 + i * 35))
 
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 80, 200, 50), GRAY, "Start game", lambda: change_state(GAME))
     continue_btn.draw(screen)
@@ -219,6 +265,7 @@ def no_set_input():
             global computer_set
             computer_set=find_set_by_computer()
             change_state(NO_SET_INCORRECT)
+        
 
 def game_screen():
     global buttons,warning, no_set_button, pauze_button
@@ -228,9 +275,13 @@ def game_screen():
         y = 150 + (i // 4) * 150
         key = str(card)
         if key in card_images:
-            screen.blit(card_images[key], (x, y))
-            index_txt = FONT.render(str(i+1), True, BLACK)
-            screen.blit(index_txt, (x + CARD_WIDTH // 2 - 40, y - 25))
+            if i in cheat_cards:
+                pygame.draw.rect(screen, BLACK, (x, y+2, CARD_HEIGHT, CARD_WIDTH))
+                screen.blit(FONT.render("NOT IN SET", True, WHITE), (x +45, y + 35))
+            else:
+                screen.blit(card_images[key], (x, y))
+                index_txt = FONT.render(str(i+1), True, BLACK)
+                screen.blit(index_txt, (x + CARD_WIDTH // 2 - 40, y - 25))
         else:
             pygame.draw.rect(screen, GRAY, (x, y, CARD_HEIGHT, CARD_WIDTH))
             screen.blit(FONT.render("?", True, BLACK), (x + 90, y + 50))
@@ -254,12 +305,19 @@ def game_screen():
         text="End break"
     else: 
         text="Begin break"
-    pauze_button = Button((SCREEN_WIDTH // 2 - 60, 50, 130, 40), GRAY, text, lambda: (pauze_change()))
+    pauze_button = Button((SCREEN_WIDTH // 2 - 60, 50, 130, 40), GRAY, text, lambda: (pauze_change("click")))
     buttons.append(pauze_button)
     pauze_button.draw(screen)
     exit_game_button = Button((20, 20, 130, 40), GRAY, "Exit game", lambda: (change_state(END)))
     buttons.append(exit_game_button)
     exit_game_button.draw(screen)
+    if len(not_in_set_cards)>0 and cheat_amount<6:
+        cheat_button = Button((SCREEN_WIDTH - 250, 60, 200, 40), GRAY, f"Hide a card: {min((6-cheat_amount),len(not_in_set_cards))} left", lambda: (cheat("click")))
+        buttons.append(cheat_button)
+        cheat_button.draw(screen)
+    else: 
+        cheat_surface = FONT.render("No hide's left!", True, RED)
+        screen.blit(cheat_surface, (SCREEN_WIDTH - 250, 60))
     input_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 60, 200, 40)
     pygame.draw.rect(screen, WHITE, input_rect)
     txt_surface = FONT.render(input_text, True, BLACK)
@@ -618,9 +676,13 @@ while running:
             if len(S.controleer_sets(S.alle_kaarten+cards_on_table))==0:
                 change_state(END)
     if state == GAME:
+        if wait_pauze>0:
+            wait_pauze-= 1/FPS
         if Pauze == False:
             round_timer -= 1 / FPS
             total_elapsed_time += 1 / FPS
+            if wait_cheat>0:
+                wait_cheat-=1 / FPS
         if round_timer <= 0:
             if len(S.controleer_sets(cards_on_table))!=0:
                 update_score("computer")
@@ -641,6 +703,9 @@ while running:
             if not Pauze:
                 if event.key == pygame.K_n:
                     no_set_button.callback()
+                elif event.key == pygame.K_h:
+                    if len(not_in_set_cards)>0 and cheat_amount<6:
+                        cheat()
                 elif event.key == pygame.K_BACKSPACE:
                     input_text = input_text[:-1]
                 elif event.key != pygame.K_BACKSPACE and event.key != pygame.K_RETURN and event.key != pygame.K_p :

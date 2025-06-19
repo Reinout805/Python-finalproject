@@ -61,6 +61,12 @@ round_timer = 30
 def print_warning(text):
     global warning
     warning=text
+def pauze_change():
+    global Pauze
+    if Pauze==False:
+        Pauze=True
+    else:
+        Pauze=False
 
 def get_timer_for_difficulty():
     if difficulty == "Easy":
@@ -180,6 +186,7 @@ def rules_screen():
         "INPUT:",
         "- Input your set in the format: 0 1 2 (card indices)",
         "- Select 'No set possible' or press 'n' on keyboard when you think that no sets are possible",
+        "Select 'Begin/End break' or press 'p' on keyboard to start/end the break",
         "POINTS:",
         "- You CORRECTLY identified a set: you get 1 point",
         "- You INCORRETLY identified a set: computer gets 1 point",
@@ -197,18 +204,19 @@ def rules_screen():
     buttons.append(continue_btn)
 
 def no_set_input():
-    if len(S.controleer_sets(cards_on_table))==0:
-        for _ in range(5):
-            update_score("player")
-        change_state(NO_SET_CORRECT)
-    else:
-        update_score("computer")
-        global computer_set
-        computer_set=find_set_by_computer()
-        change_state(NO_SET_INCORRECT)
+    if not Pauze:
+        if len(S.controleer_sets(cards_on_table))==0:
+            for _ in range(5):
+                update_score("player")
+            change_state(NO_SET_CORRECT)
+        else:
+            update_score("computer")
+            global computer_set
+            computer_set=find_set_by_computer()
+            change_state(NO_SET_INCORRECT)
 
 def game_screen():
-    global buttons,warning, no_set_button
+    global buttons,warning, no_set_button, pauze_button
     screen.fill((164, 173, 237))
     for i, card in enumerate(cards_on_table):
         x = 50 + (i % 4) * 220
@@ -223,9 +231,9 @@ def game_screen():
             screen.blit(FONT.render("?", True, BLACK), (x + 90, y + 50))
         if i in selected_cards:
             pygame.draw.rect(screen, BLUE, (x, y+2,CARD_HEIGHT , CARD_WIDTH), 8) #changes HEIGHT and WITH in stead of rotating the rectangle
-        #if Pauze:
-            #pygame.draw.rect(screen, GRAY, (x, y+2, CARD_HEIGHT, CARD_WIDTH))
-           # screen.blit(FONT.render("?", True, BLACK), (x + 90, y + 50))
+        if Pauze:
+            pygame.draw.rect(screen, GRAY, (x, y+2, CARD_HEIGHT, CARD_WIDTH))
+            screen.blit(FONT.render("?", True, BLACK), (x + 90, y + 50))
     screen.blit(FONT.render(f"Time: {round(round_timer, 1)}s", True, BLACK), (SCREEN_WIDTH // 2 - 50, 20))
     screen.blit(FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK), (SCREEN_WIDTH - 250, 20))
     screen.blit(FONT.render(f"Computer Score: {computer_score}", True, BLACK), (750, SCREEN_HEIGHT - 50))
@@ -234,11 +242,18 @@ def game_screen():
         screen.blit(FONT.render(f"Fastest set: {round(fastest_set,1)}", True, BLACK), (50, SCREEN_HEIGHT - 90))
     else:
         screen.blit(FONT.render(f"Fastest set: -", True, BLACK), (50, SCREEN_HEIGHT - 90))
-    no_set_button = Button((SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 110, 200, 40), BLUE, "No set possible", lambda: (no_set_input()))
+    no_set_button = Button((SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 110, 200, 40), GRAY, "No set possible", lambda: (no_set_input()))
     buttons.append(no_set_button)
     no_set_button.draw(screen)
+    if Pauze==True:
+        text="End break"
+    else: 
+        text="Begin break"
+    pauze_button = Button((20,20, 150, 40), GRAY, text, lambda: (pauze_change()))
+    buttons.append(pauze_button)
+    pauze_button.draw(screen)
     input_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 60, 200, 40)
-    pygame.draw.rect(screen, GRAY, input_rect)
+    pygame.draw.rect(screen, WHITE, input_rect)
     txt_surface = FONT.render(input_text, True, BLACK)
     warning_surface=FONT.render(warning, True, RED)
     if warning!="":
@@ -571,8 +586,9 @@ while running:
             if len(S.controleer_sets(S.alle_kaarten+cards_on_table))==0:
                 change_state(END)
     if state == GAME:
-        round_timer -= 1 / FPS
-        total_elapsed_time += 1 / FPS
+        if Pauze == False:
+            round_timer -= 1 / FPS
+            total_elapsed_time += 1 / FPS
         if round_timer <= 0:
             if len(S.controleer_sets(cards_on_table))!=0:
                 update_score("computer")
@@ -588,56 +604,57 @@ while running:
             button.handle_event(event)
         if event.type == pygame.KEYDOWN and state == GAME:
             warning=""
-            #if event.key == pygame.K_p:
-            #    pauze_button.callback()
-            if event.key == pygame.K_n:
-                no_set_button.callback()
-            elif event.key == pygame.K_BACKSPACE:
-                input_text = input_text[:-1]
-            elif event.key != pygame.K_BACKSPACE and event.key != pygame.K_RETURN:
-                input_text += event.unicode
-            if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN or event.key == pygame.K_BACKSPACE:
-                try:
-                    indices = list(map(int, input_text.strip().split()))
-                    selected_cards = [index-1 for index in indices]
-                    if max(selected_cards)>12 or min(selected_cards)<0:
-                        print_warning("Index not in range!")
+            if event.key == pygame.K_p:
+                pauze_change()
+            if not Pauze:
+                if event.key == pygame.K_n:
+                    no_set_button.callback()
+                elif event.key == pygame.K_BACKSPACE:
+                    input_text = input_text[:-1]
+                elif event.key != pygame.K_BACKSPACE and event.key != pygame.K_RETURN and event.key != pygame.K_p :
+                    input_text += event.unicode
+                if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN or event.key == pygame.K_BACKSPACE:
+                    try:
+                        indices = list(map(int, input_text.strip().split()))
+                        selected_cards = [index-1 for index in indices]
+                        if max(selected_cards)>12 or min(selected_cards)<0:
+                            print_warning("Index not in range!")
+                            selected_cards=[]
+                            input_text=''
+                    except:
+                        print_warning("No integer!")
                         selected_cards=[]
-                        input_text=''
-                except:
-                    print_warning("No integer!")
-                    selected_cards=[]
-                    input_text=""
+                        input_text=""
 
-            if event.key == pygame.K_RETURN:
-                try:
-                    if len(indices) == 3 and len(set(indices)) == 3:
-                        selected_set = [cards_on_table[i] for i in selected_cards]
-                        if selected_set[0].check_3_cards_if_set(selected_set[1], selected_set[2]):
-                            choosen_indices = indices
-                            update_score("player")
-                            change_state(GREEN_SCREEN)
-                            
-                        else:
-                            update_score("computer")
-                            if len(S.controleer_sets(cards_on_table))==0:
-                                change_state(RED_NO_SET_SCREEN)
+                if event.key == pygame.K_RETURN:
+                    try:
+                        if len(indices) == 3 and len(set(indices)) == 3:
+                            selected_set = [cards_on_table[i] for i in selected_cards]
+                            if selected_set[0].check_3_cards_if_set(selected_set[1], selected_set[2]):
+                                choosen_indices = indices
+                                update_score("player")
+                                change_state(GREEN_SCREEN)
+                                
                             else:
-                                computer_set=find_set_by_computer()
-                                change_state(RED_SCREEN)
-                    else:
-                        if len(indices) < 3:
-                            print_warning("Not enough cards!")
-                            selected_cards=[]
-                        elif len(indices) >3:
-                            print_warning("Too many cards!")
-                            selected_cards=[]
+                                update_score("computer")
+                                if len(S.controleer_sets(cards_on_table))==0:
+                                    change_state(RED_NO_SET_SCREEN)
+                                else:
+                                    computer_set=find_set_by_computer()
+                                    change_state(RED_SCREEN)
                         else:
-                            print_warning("Same cards selected!")
-                            selected_cards=[]
-                except:
-                    pass
-                input_text = ""
+                            if len(indices) < 3:
+                                print_warning("Not enough cards!")
+                                selected_cards=[]
+                            elif len(indices) >3:
+                                print_warning("Too many cards!")
+                                selected_cards=[]
+                            else:
+                                print_warning("Same cards selected!")
+                                selected_cards=[]
+                    except:
+                        pass
+                    input_text = ""
     if state in state_functions:
         state_functions[state]()
 

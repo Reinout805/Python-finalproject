@@ -13,21 +13,37 @@ FONT = pygame.font.SysFont('Arial', 24)
 BIG_FONT = pygame.font.SysFont('Arial', 36)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSET_PATH = os.path.join(BASE_DIR, "kaarten")
-
+Pauze=False
 WHITE = (255, 255, 255)
 GRAY = (150, 150, 150)
 RED = (200, 50, 50)
+RED2 = (122, 5, 5)
 ORANGE= (209, 125, 15)
 GREEN = (50, 200, 50)
+GREEN2=(15, 122, 53)
 BLACK = (0, 0, 0)
 BLUE = (50, 50, 200)
 
 CARD_WIDTH, CARD_HEIGHT = 100, 200
 card_images = {}
+warning=""
 
 # UI States
-START, RULES, GAME, GREEN_SCREEN, RED_SCREEN, TIME_OVER, GREY_SCREEN, END = range(8)
-state = END
+START, RULES, GAME, GREEN_SCREEN, RED_NO_SET_SCREEN, RED_SCREEN, TIME_OVER, GREY_SCREEN, NO_SET_CORRECT, NO_SET_INCORRECT, END = range(11)
+state = START
+state_functions = {
+    START: lambda: start_screen(),
+    RULES: lambda: rules_screen(),
+    GAME: lambda: game_screen(),
+    GREEN_SCREEN: lambda: green_screen(),
+    NO_SET_CORRECT: lambda: no_set_correct_screen(),
+    NO_SET_INCORRECT: lambda: no_set_incorrect_screen(computer_set),
+    RED_SCREEN: lambda: red_screen(computer_set),
+    RED_NO_SET_SCREEN: lambda: red_no_set_screen(),
+    TIME_OVER: lambda: time_screen(computer_set),
+    GREY_SCREEN: lambda: grey_screen(),
+    END: lambda: end_screen()
+}
 
 
 
@@ -41,6 +57,10 @@ time_easy = 60
 time_medium = 30
 time_hard=1
 round_timer = 30
+
+def print_warning(text):
+    global warning
+    warning=text
 
 def get_timer_for_difficulty():
     if difficulty == "Easy":
@@ -157,7 +177,15 @@ def rules_screen():
         "- Identify a set of 3 cards.",
         "- Each card has 4 features.",
         "- A valid set has all the same or all different features.",
-        "Input your set in the format: 0 1 2 (card indices)"
+        "INPUT:",
+        "- Input your set in the format: 0 1 2 (card indices)",
+        "- Select 'No set possible' or press 'n' on keyboard when you think that no sets are possible",
+        "POINTS:",
+        "- You CORRECTLY identified a set: you get 1 point",
+        "- You INCORRETLY identified a set: computer gets 1 point",
+        "- You CORRECTLY identified that no sets are possible: you get 5 points",
+        "- You INCORRECTLY identified that no sets are possible: computer gets 1 points"
+
     ]
     for i, line in enumerate(rules):
         txt = FONT.render(line, True, BLACK)
@@ -168,7 +196,19 @@ def rules_screen():
     buttons.clear()
     buttons.append(continue_btn)
 
+def no_set_input():
+    if len(S.controleer_sets(cards_on_table))==0:
+        for _ in range(5):
+            update_score("player")
+        change_state(NO_SET_CORRECT)
+    else:
+        update_score("computer")
+        global computer_set
+        computer_set=find_set_by_computer()
+        change_state(NO_SET_INCORRECT)
+
 def game_screen():
+    global buttons,warning, no_set_button
     screen.fill((164, 173, 237))
     for i, card in enumerate(cards_on_table):
         x = 50 + (i % 4) * 220
@@ -177,13 +217,15 @@ def game_screen():
         if key in card_images:
             screen.blit(card_images[key], (x, y))
             index_txt = FONT.render(str(i+1), True, BLACK)
-            screen.blit(index_txt, (x + CARD_WIDTH // 2 - 10, y - 25))
+            screen.blit(index_txt, (x + CARD_WIDTH // 2 - 40, y - 25))
         else:
-            pygame.draw.rect(screen, GRAY, (x, y, CARD_WIDTH, CARD_HEIGHT))
-            screen.blit(FONT.render("UNKNOWN CARD", True, BLACK), (x + 90, y + 50))
+            pygame.draw.rect(screen, GRAY, (x, y, CARD_HEIGHT, CARD_WIDTH))
+            screen.blit(FONT.render("?", True, BLACK), (x + 90, y + 50))
         if i in selected_cards:
             pygame.draw.rect(screen, BLUE, (x, y+2,CARD_HEIGHT , CARD_WIDTH), 8) #changes HEIGHT and WITH in stead of rotating the rectangle
-
+        #if Pauze:
+            #pygame.draw.rect(screen, GRAY, (x, y+2, CARD_HEIGHT, CARD_WIDTH))
+           # screen.blit(FONT.render("?", True, BLACK), (x + 90, y + 50))
     screen.blit(FONT.render(f"Time: {round(round_timer, 1)}s", True, BLACK), (SCREEN_WIDTH // 2 - 50, 20))
     screen.blit(FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK), (SCREEN_WIDTH - 250, 20))
     screen.blit(FONT.render(f"Computer Score: {computer_score}", True, BLACK), (750, SCREEN_HEIGHT - 50))
@@ -192,17 +234,31 @@ def game_screen():
         screen.blit(FONT.render(f"Fastest set: {round(fastest_set,1)}", True, BLACK), (50, SCREEN_HEIGHT - 90))
     else:
         screen.blit(FONT.render(f"Fastest set: -", True, BLACK), (50, SCREEN_HEIGHT - 90))
-
+    no_set_button = Button((SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 110, 200, 40), BLUE, "No set possible", lambda: (no_set_input()))
+    buttons.append(no_set_button)
+    no_set_button.draw(screen)
     input_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 60, 200, 40)
     pygame.draw.rect(screen, GRAY, input_rect)
     txt_surface = FONT.render(input_text, True, BLACK)
+    warning_surface=FONT.render(warning, True, RED)
+    if warning!="":
+        screen.blit(warning_surface, (input_rect.x + 5, input_rect.y + 5))
     screen.blit(txt_surface, (input_rect.x + 5, input_rect.y + 5))
 
 def green_screen():
     global fastest_set
     screen.fill(GREEN)
     msg = BIG_FONT.render("Correct Set!", True, BLACK)
-    screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 200))
+    screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 140))
+    for i, card in enumerate(selected_set):
+        x = SCREEN_WIDTH//2 + (i % 4) * 220 -320
+        y = 230
+        key = str(card)
+        if key in card_images:
+            screen.blit(card_images[key], (x, y))
+        else:
+            pygame.draw.rect(screen, GRAY, (x, y, CARD_WIDTH, CARD_HEIGHT))
+            screen.blit(FONT.render("UNKNOWN CARD", True, BLACK), (x + 90, y + 50))
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Continue", continue_from_green)
     continue_btn.draw(screen)
     buttons.clear()
@@ -213,19 +269,22 @@ def green_screen():
     if fastest_set>new_time:
         fastest_set=new_time
     text = FONT.render(f"Time used: {round(new_time, 1)}s", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 250))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 340))
+    text = FONT.render(f"Your correct set:", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 190))
     if fastest_set>0:
         text = FONT.render(f"Fastest set: {round(fastest_set, 1)}s", True, BLACK)
-        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
     else:
         text = FONT.render(f"Fastest set: -", True, BLACK)
-        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
     text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 460))
     text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 340))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 430))
     text = FONT.render(f"Player Score: {player_score}", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 310))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 400))
+
 
 def continue_from_green():
     global cards_on_table, round_timer, choosen_indices, selected_cards
@@ -235,39 +294,102 @@ def continue_from_green():
     round_timer = get_timer_for_difficulty()
     change_state(GAME)
 
-def red_screen():
-    screen.fill(RED)
-    msg = BIG_FONT.render("Wrong!", True, BLACK)
-    global input_text
+def red_screen(gevonden_set):
+    global selected_set, input_text
     input_text=""
-    screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 200))
+    screen.fill(RED)
+    msg = BIG_FONT.render("Wrong set!", True, BLACK)
+    for i, card in enumerate(selected_set):
+        x = SCREEN_WIDTH//2 + (i % 4) * 220 -320
+        y = 100
+        key = str(card)
+        if key in card_images:
+            screen.blit(card_images[key], (x, y))
+        else:
+            pygame.draw.rect(screen, GRAY, (x, y, CARD_WIDTH, CARD_HEIGHT))
+            screen.blit(FONT.render("UNKNOWN CARD", True, BLACK), (x + 90, y + 50))
+    for i, card in enumerate(gevonden_set):
+        x = SCREEN_WIDTH//2 + (i % 4) * 220 -320
+        y = 260
+        key = str(card)
+        if key in card_images:
+            screen.blit(card_images[key], (x, y))
+        else:
+            pygame.draw.rect(screen, GRAY, (x, y, CARD_WIDTH, CARD_HEIGHT))
+            screen.blit(FONT.render("UNKNOWN CARD", True, BLACK), (x + 90, y + 50))
+    text = FONT.render(f"The computer found this set:", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 220))
+    screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 10))
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Continue", continue_from_red)
     continue_btn.draw(screen)
     buttons.clear()
+    text = FONT.render(f"Your incorrect set:", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 60))
     if fastest_set>0:
         text = FONT.render(f"Fastest set: {round(fastest_set, 1)}s", True, BLACK)
-        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
     else:
         text = FONT.render(f"Fastest set: -", True, BLACK)
-        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
     text = FONT.render(f"Time used: {round(get_timer_for_difficulty()-round_timer, 1)}s", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 250))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 560))
     text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 460))
     text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 340))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 430))
     text = FONT.render(f"Player Score: {player_score}", True, BLACK)
-    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 310))
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 400))
     buttons.append(continue_btn)
 
 def continue_from_red():
     global cards_on_table, round_timer, selected_cards, selected_cards
     selected_cards=[]
-    if len(S.controleer_sets(cards_on_table))!=0:
-        S.verwijder_willekeurige_set(cards_on_table)
-        S.voeg_kaarten_toe_op_tafel(cards_on_table)
+    S.voeg_kaarten_toe_op_tafel(cards_on_table)
+    round_timer = get_timer_for_difficulty()
+    change_state(GAME)
+
+def red_no_set_screen():
+    global selected_set, input_text
+    input_text=""
+    screen.fill(RED)
+    msg = BIG_FONT.render("Wrong set!", True, BLACK)
+    for i, card in enumerate(selected_set):
+        x = SCREEN_WIDTH//2 + (i % 4) * 220 -320
+        y = 200
+        key = str(card)
+        if key in card_images:
+            screen.blit(card_images[key], (x, y))
+        else:
+            pygame.draw.rect(screen, GRAY, (x, y, CARD_WIDTH, CARD_HEIGHT))
+            screen.blit(FONT.render("UNKNOWN CARD", True, BLACK), (x + 90, y + 50))
+    text = BIG_FONT.render(f"There was no set possible", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 320))
+    screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 110))
+    continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Continue", continue_from_red_no_set)
+    continue_btn.draw(screen)
+    buttons.clear()
+    text = FONT.render(f"Your incorrect set:", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 160))
+    if fastest_set>0:
+        text = FONT.render(f"Fastest set: {round(fastest_set, 1)}s", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
     else:
-        pass
+        text = FONT.render(f"Fastest set: -", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
+    text = FONT.render(f"Time used: {round(get_timer_for_difficulty()-round_timer, 1)}s", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 560))
+    text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 460))
+    text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 430))
+    text = FONT.render(f"Player Score: {player_score}", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 400))
+    buttons.append(continue_btn)
+
+def continue_from_red_no_set():
+    global cards_on_table, round_timer, selected_cards, selected_cards
+    selected_cards=[]
+    S.verwijder_eerste_3_kaarten(cards_on_table)
     round_timer = get_timer_for_difficulty()
     change_state(GAME)
 
@@ -318,9 +440,23 @@ def continue_from_time():
 
 def grey_screen():
     screen.fill(GRAY)
-    msg = BIG_FONT.render("No sets possible!", True, BLACK)
+    msg = BIG_FONT.render("Time over: No sets possible!", True, BLACK)
     screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 200))
-    continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY,  "Continue", continue_from_grey)
+    continue_btn = Button((SCREEN_WIDTH // 2 - 100, 400, 200, 50), BLUE,  "Continue", continue_from_grey)
+    if fastest_set>0:
+        text = FONT.render(f"Fastest set: {round(fastest_set, 1)}s", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+    else:
+        text = FONT.render(f"Fastest set: -", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+    text = FONT.render(f"Cards 1, 2 and 3 will be replaced. ", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 250))
+    text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
+    text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 340))
+    text = FONT.render(f"Player Score: {player_score}", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 310))
     continue_btn.draw(screen)
     buttons.clear()
     buttons.append(continue_btn)
@@ -329,6 +465,79 @@ def continue_from_grey():
     global cards_on_table, round_timer, selected_cards
     selected_cards=[]
     S.verwijder_eerste_3_kaarten(cards_on_table)
+    round_timer = get_timer_for_difficulty()
+    change_state(GAME)
+
+def no_set_correct_screen():
+    screen.fill(GREEN2)
+    msg = BIG_FONT.render("You are correct, no sets possible!", True, BLACK)
+    screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 160))
+    msg2 = FONT.render("You get 5 points!", True, BLACK)
+    screen.blit(msg2, (SCREEN_WIDTH // 2 - msg2.get_width() // 2, 200))
+    continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY,  "Continue", continue_from_no_set_correct)
+    if fastest_set>0:
+        text = FONT.render(f"Fastest set: {round(fastest_set, 1)}s", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+    else:
+        text = FONT.render(f"Fastest set: -", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
+    text = FONT.render(f"Cards 1, 2 and 3 will be replaced. ", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 250))
+    text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
+    text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 340))
+    text = FONT.render(f"Player Score: {player_score}", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 310))
+    continue_btn.draw(screen)
+    buttons.clear()
+    buttons.append(continue_btn)
+
+def continue_from_no_set_correct():
+    global cards_on_table, round_timer, selected_cards
+    selected_cards=[]
+    S.verwijder_eerste_3_kaarten(cards_on_table)
+    round_timer = get_timer_for_difficulty()
+    change_state(GAME)
+
+def no_set_incorrect_screen(gevonden_set):
+    screen.fill(RED2)
+    msg = BIG_FONT.render("You are wrong, there is a set possible!", True, BLACK)
+    for i, card in enumerate(gevonden_set):
+        x = SCREEN_WIDTH//2 + (i % 4) * 220 -320
+        y = 260
+        key = str(card)
+        if key in card_images:
+            screen.blit(card_images[key], (x, y))
+        else:
+            pygame.draw.rect(screen, GRAY, (x, y, CARD_WIDTH, CARD_HEIGHT))
+            screen.blit(FONT.render("UNKNOWN CARD", True, BLACK), (x + 90, y + 50))
+    global input_text
+    input_text=""
+    screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 170))
+    continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Continue", continue_from_time)
+    continue_btn.draw(screen)
+    buttons.clear()
+    text = FONT.render(f"The computer found this set:", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 220))
+    if fastest_set>0:
+        text = FONT.render(f"Fastest set: {round(fastest_set, 1)}s", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
+    else:
+        text = FONT.render(f"Fastest set: -", True, BLACK)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
+    text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 460))
+    text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 430))
+    text = FONT.render(f"Player Score: {player_score}", True, BLACK)
+    screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 400))
+    buttons.append(continue_btn)
+
+def continue_from_no_set_incorrect():
+    global cards_on_table, round_timer, selected_cards
+    selected_cards=[]
+    S.voeg_kaarten_toe_op_tafel(cards_on_table)
     round_timer = get_timer_for_difficulty()
     change_state(GAME)
 
@@ -378,49 +587,59 @@ while running:
         for button in buttons:
             button.handle_event(event)
         if event.type == pygame.KEYDOWN and state == GAME:
-            indices = list(map(int, input_text.strip().split()))
-            selected_cards = [index-1 for index in indices]
+            warning=""
+            #if event.key == pygame.K_p:
+            #    pauze_button.callback()
+            if event.key == pygame.K_n:
+                no_set_button.callback()
+            elif event.key == pygame.K_BACKSPACE:
+                input_text = input_text[:-1]
+            elif event.key != pygame.K_BACKSPACE and event.key != pygame.K_RETURN:
+                input_text += event.unicode
+            if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN or event.key == pygame.K_BACKSPACE:
+                try:
+                    indices = list(map(int, input_text.strip().split()))
+                    selected_cards = [index-1 for index in indices]
+                    if max(selected_cards)>12 or min(selected_cards)<0:
+                        print_warning("Index not in range!")
+                        selected_cards=[]
+                        input_text=''
+                except:
+                    print_warning("No integer!")
+                    selected_cards=[]
+                    input_text=""
+
             if event.key == pygame.K_RETURN:
                 try:
                     if len(indices) == 3 and len(set(indices)) == 3:
                         selected_set = [cards_on_table[i] for i in selected_cards]
-                        #print(selected_set)
-                        #for card in selected_set:
-                            #print(card, card.kleur, card.vorm, card.vulling, card.aantal, type(card.aantal))
                         if selected_set[0].check_3_cards_if_set(selected_set[1], selected_set[2]):
                             choosen_indices = indices
-                            #print(selected_cards)
                             update_score("player")
                             change_state(GREEN_SCREEN)
                             
                         else:
                             update_score("computer")
-                            change_state(RED_SCREEN)
-                            
+                            if len(S.controleer_sets(cards_on_table))==0:
+                                change_state(RED_NO_SET_SCREEN)
+                            else:
+                                computer_set=find_set_by_computer()
+                                change_state(RED_SCREEN)
+                    else:
+                        if len(indices) < 3:
+                            print_warning("Not enough cards!")
+                            selected_cards=[]
+                        elif len(indices) >3:
+                            print_warning("Too many cards!")
+                            selected_cards=[]
+                        else:
+                            print_warning("Same cards selected!")
+                            selected_cards=[]
                 except:
-                    update_score("computer")
-                    change_state(RED_SCREEN)
+                    pass
                 input_text = ""
-            elif event.key == pygame.K_BACKSPACE:
-                input_text = input_text[:-1]
-            else:
-                input_text += event.unicode
-    if state == START:
-        start_screen()
-    elif state == RULES:
-        rules_screen()
-    elif state == GAME:
-        game_screen()
-    elif state == GREEN_SCREEN:
-        green_screen()
-    elif state == RED_SCREEN:
-        red_screen()
-    elif state == TIME_OVER:
-        time_screen(computer_set)
-    elif state == GREY_SCREEN:
-        grey_screen()
-    elif state == END:
-        end_screen()
+    if state in state_functions:
+        state_functions[state]()
 
     pygame.display.flip()
 

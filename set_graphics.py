@@ -30,7 +30,7 @@ warning=""
 
 # UI States
 START, RULES, GAME, GREEN_SCREEN, RED_NO_SET_SCREEN, RED_SCREEN, TIME_OVER, GREY_SCREEN, NO_SET_CORRECT, NO_SET_INCORRECT, END = range(11)
-state = START
+state = END
 state_functions = {
     START: lambda: start_screen(),
     RULES: lambda: rules_screen(),
@@ -163,7 +163,7 @@ def start_screen():
     easy_btn = Button((400, 200, 200, 50), GRAY, f"Easy: {time_easy}s", None)
     medium_btn = Button((400, 270, 200, 50), GRAY, f"Medium: {time_medium}s", None)
     hard_btn = Button((400, 340, 200, 50), GRAY, f"Hard: {time_hard}s", None)
-    start_btn = Button((400, 420, 200, 50), BLUE, "Start Game", lambda: (start_game(), set_selected_button(None)))
+    start_btn = Button((400, 420, 200, 50), BLUE, "Continue", lambda: (start_game(), set_selected_button(None)))
 
     easy_btn.callback = lambda: (set_difficulty("Easy"), set_selected_button(easy_btn))
     medium_btn.callback = lambda: (set_difficulty("Medium"), set_selected_button(medium_btn))
@@ -172,7 +172,9 @@ def start_screen():
     buttons = [easy_btn, medium_btn, hard_btn, start_btn]
     screen.fill(WHITE)
     title = BIG_FONT.render("Welcome to SET", True, BLACK)
-    screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, 50))
+    screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, 80))
+    under_title = FONT.render("Choose your difficulty:", True, BLACK)
+    screen.blit(under_title, (SCREEN_WIDTH // 2 - under_title.get_width() // 2, 140))
     for button in buttons:
         button.draw(screen)
 
@@ -180,25 +182,28 @@ def rules_screen():
     screen.fill(WHITE)
     rules = [
         "RULES OF SET:",
-        "- Identify a set of 3 cards.",
-        "- Each card has 4 features.",
-        "- A valid set has all the same or all different features.",
+        "- Identify a set of 3 cards",
+        "- Each card has 4 features",
+        "- A valid set has all the same or all different features",
         "INPUT:",
         "- Input your set in the format: 0 1 2 (card indices)",
         "- Select 'No set possible' or press 'n' on keyboard when you think that no sets are possible",
-        "Select 'Begin/End break' or press 'p' on keyboard to start/end the break",
+        "- Select 'Begin/End break' or press 'p' on keyboard to start/end the break",
         "POINTS:",
         "- You CORRECTLY identified a set: you get 1 point",
         "- You INCORRETLY identified a set: computer gets 1 point",
         "- You CORRECTLY identified that no sets are possible: you get 5 points",
-        "- You INCORRECTLY identified that no sets are possible: computer gets 1 points"
+        "- You INCORRECTLY identified that no sets are possible: computer gets 1 point",
+        "- You run out of time while sets are possible: computer gets 1 point",
+        "- You run out of time while no sets are possible: - ",
+
 
     ]
     for i, line in enumerate(rules):
         txt = FONT.render(line, True, BLACK)
         screen.blit(txt, (50, 50 + i * 40))
 
-    continue_btn = Button((SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 100, 200, 50), GRAY, "Continue", lambda: change_state(GAME))
+    continue_btn = Button((SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 80, 200, 50), GRAY, "Start game", lambda: change_state(GAME))
     continue_btn.draw(screen)
     buttons.clear()
     buttons.append(continue_btn)
@@ -249,9 +254,12 @@ def game_screen():
         text="End break"
     else: 
         text="Begin break"
-    pauze_button = Button((20,20, 150, 40), GRAY, text, lambda: (pauze_change()))
+    pauze_button = Button((SCREEN_WIDTH // 2 - 60, 50, 130, 40), GRAY, text, lambda: (pauze_change()))
     buttons.append(pauze_button)
     pauze_button.draw(screen)
+    exit_game_button = Button((20, 20, 130, 40), GRAY, "Exit game", lambda: (change_state(END)))
+    buttons.append(exit_game_button)
+    exit_game_button.draw(screen)
     input_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 60, 200, 40)
     pygame.draw.rect(screen, WHITE, input_rect)
     txt_surface = FONT.render(input_text, True, BLACK)
@@ -276,7 +284,9 @@ def green_screen():
             screen.blit(FONT.render("UNKNOWN CARD", True, BLACK), (x + 90, y + 50))
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Continue", continue_from_green)
     continue_btn.draw(screen)
-    buttons.clear()
+    exit_game_button = Button((20, 20, 130, 40), GRAY, "Exit game", lambda: (change_state(END)))
+    buttons.append(exit_game_button)
+    exit_game_button.draw(screen)
     buttons.append(continue_btn)
     new_time=get_timer_for_difficulty()-round_timer
     if fastest_set==-1:
@@ -337,7 +347,9 @@ def red_screen(gevonden_set):
     screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 10))
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Continue", continue_from_red)
     continue_btn.draw(screen)
-    buttons.clear()
+    exit_game_button = Button((20, 20, 130, 40), GRAY, "Exit game", lambda: (change_state(END)))
+    buttons.append(exit_game_button)
+    exit_game_button.draw(screen)
     text = FONT.render(f"Your incorrect set:", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 60))
     if fastest_set>0:
@@ -382,7 +394,9 @@ def red_no_set_screen():
     screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 110))
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Continue", continue_from_red_no_set)
     continue_btn.draw(screen)
-    buttons.clear()
+    exit_game_button = Button((20, 20, 130, 40), GRAY, "Exit game", lambda: (change_state(END)))
+    buttons.append(exit_game_button)
+    exit_game_button.draw(screen)
     text = FONT.render(f"Your incorrect set:", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 160))
     if fastest_set>0:
@@ -429,7 +443,9 @@ def time_screen(gevonden_set):
     screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 170))
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Continue", continue_from_time)
     continue_btn.draw(screen)
-    buttons.clear()
+    exit_game_button = Button((20, 20, 130, 40), GRAY, "Exit game", lambda: (change_state(END)))
+    buttons.append(exit_game_button)
+    exit_game_button.draw(screen)
     text = FONT.render(f"The computer found this set:", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 220))
     if fastest_set>0:
@@ -473,7 +489,9 @@ def grey_screen():
     text = FONT.render(f"Player Score: {player_score}", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 310))
     continue_btn.draw(screen)
-    buttons.clear()
+    exit_game_button = Button((20, 20, 130, 40), GRAY, "Exit game", lambda: (change_state(END)))
+    buttons.append(exit_game_button)
+    exit_game_button.draw(screen)
     buttons.append(continue_btn)
 
 def continue_from_grey():
@@ -505,7 +523,9 @@ def no_set_correct_screen():
     text = FONT.render(f"Player Score: {player_score}", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 310))
     continue_btn.draw(screen)
-    buttons.clear()
+    exit_game_button = Button((20, 20, 130, 40), GRAY, "Exit game", lambda: (change_state(END)))
+    buttons.append(exit_game_button)
+    exit_game_button.draw(screen)
     buttons.append(continue_btn)
 
 def continue_from_no_set_correct():
@@ -532,7 +552,9 @@ def no_set_incorrect_screen(gevonden_set):
     screen.blit(msg, (SCREEN_WIDTH // 2 - msg.get_width() // 2, 170))
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Continue", continue_from_time)
     continue_btn.draw(screen)
-    buttons.clear()
+    exit_game_button = Button((20, 20, 130, 40), GRAY, "Exit game", lambda: (change_state(END)))
+    buttons.append(exit_game_button)
+    exit_game_button.draw(screen)
     text = FONT.render(f"The computer found this set:", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 220))
     if fastest_set>0:
@@ -558,19 +580,29 @@ def continue_from_no_set_incorrect():
 
 def end_screen():
     screen.fill(WHITE)
-    title = BIG_FONT.render("Game Over!", True, BLACK)
-    under_title = FONT.render("There are no sets possible anymore", True, BLACK)
+    if len(S.alle_kaarten+cards_on_table)<=20:
+        if len(S.controleer_sets(S.alle_kaarten+cards_on_table))==0:
+            title = BIG_FONT.render("Game ended: no sets possible anymore!", True, BLACK)
+    else:
+        title = BIG_FONT.render("Game ended!", True, BLACK)
+    if player_score>computer_score:
+        winner="You won!"
+    elif player_score<computer_score:
+        winner="The computer won!"
+    else:
+        winner="Draw!"
+    under_title = BIG_FONT.render(winner, True, BLACK)
     score_text = FONT.render(f"Final Score — Player: {player_score} | Computer: {computer_score}", True, BLACK)
-    time_text = FONT.render(f"Total Time: {int(total_elapsed_time)} seconds", True, BLACK)
+    time_text = FONT.render(f"Total Time: {int(total_elapsed_time)//60} minutes and {int(total_elapsed_time)-60*(int(total_elapsed_time)//60)} seconds", True, BLACK)
     if fastest_set>0:
         fasttime_text = FONT.render(f"Fastest set in {round(fastest_set,1)} seconds", True, BLACK)
     else:
         fasttime_text = FONT.render(f"Fastest set: -", True, BLACK)
     screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, 150))
-    screen.blit(under_title, (SCREEN_WIDTH // 2 - under_title.get_width() // 2, 190))
+    screen.blit(under_title, (SCREEN_WIDTH // 2 - under_title.get_width() // 2, 210))
     screen.blit(score_text, (SCREEN_WIDTH // 2 - score_text.get_width() // 2, 250))
     screen.blit(time_text, (SCREEN_WIDTH // 2 - time_text.get_width() // 2, 360))
-    screen.blit(fasttime_text, (SCREEN_WIDTH // 2 - time_text.get_width() // 2, 280))
+    screen.blit(fasttime_text, (SCREEN_WIDTH // 2 - fasttime_text.get_width() // 2, 280))
     continue_btn = Button((SCREEN_WIDTH // 2 - 100, 500, 200, 50), GRAY, "Back to Menu", lambda: (change_state(START), init_game()))
     continue_btn.draw(screen)
     buttons.clear()

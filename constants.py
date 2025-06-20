@@ -3,8 +3,6 @@ import os
 pygame.init()
 pygame.font.init()
 
-#begin state
-
 
 #colors
 WHITE = (255, 255, 255)

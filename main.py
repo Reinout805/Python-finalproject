@@ -4,12 +4,15 @@ import sys
 import os
 from classes import Kaart, Spel, Button
 from constants import *
-from screens import *
-from help_functions import *
 
 
 pygame.init()
 pygame.font.init()
+
+# Setup
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("SET!")
+clock = pygame.time.Clock()
 
 
 # UI States
@@ -29,55 +32,6 @@ state_functions = {
     END: lambda: end_screen()
 }
 
-
-# Setup
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("SET!")
-clock = pygame.time.Clock()
-
-
-
-def print_warning(text):
-    global warning
-    warning=text
-def pauze_change(text=""):
-    global wait_pauze, Pauze
-    if text=="click":
-        if wait_pauze<=0:
-            if Pauze==False:
-                Pauze=True
-            else:
-                Pauze=False
-            wait_pauze=1/30
-    else:
-        if Pauze==False:
-            Pauze=True
-        else:
-            Pauze=False
-
-def cheat(text=""):
-    global cheat_cards, not_in_set_cards, cheat_amount, round_timer, wait_cheat
-    if Pauze==False:
-        if text=="click":
-            if wait_cheat<=0:
-                cheat_amount+=1
-                x=random.choice(not_in_set_cards)
-                cheat_cards.append(x)
-                not_in_set_cards.remove(x)
-                if round_timer>=5:
-                    round_timer-=5
-                else:
-                    round_timer=0
-                wait_cheat=1/30
-        else: 
-            cheat_amount+=1
-            x=random.choice(not_in_set_cards)
-            cheat_cards.append(x)
-            not_in_set_cards.remove(x)
-            if round_timer>=5:
-                round_timer-=5
-            else:
-                round_timer=0
 
 #main functions
 def init_game():
@@ -116,6 +70,54 @@ def load_card_images():
                     else:
                         print(f"Missing: {path}")
 
+
+#extra functions
+def print_warning(text):
+    global warning, selected_cards, input_text
+    warning=text
+    selected_cards=[]
+    input_text=""
+
+def pauze_change(text=""):
+    global wait_pauze, Pauze
+    if text=="click":
+        if wait_pauze<=0:
+            if Pauze==False:
+                Pauze=True
+            else:
+                Pauze=False
+            wait_pauze=1/30
+    else:
+        if Pauze==False:
+            Pauze=True
+        else:
+            Pauze=False
+
+def cheat(text=""):
+    global cheat_cards, not_in_set_cards, cheat_amount, round_timer, wait_cheat
+    if Pauze==False:
+        if text=="click":
+            if cheat_amount<6 and len(not_in_set_cards)>0:
+                if wait_cheat<=0:
+                    cheat_amount+=1
+                    x=random.choice(not_in_set_cards)
+                    cheat_cards.append(x)
+                    not_in_set_cards.remove(x)
+                    if round_timer>=5:
+                        round_timer-=5
+                    else:
+                        round_timer=0
+                    wait_cheat=1/30
+        else: 
+            cheat_amount+=1
+            x=random.choice(not_in_set_cards)
+            cheat_cards.append(x)
+            not_in_set_cards.remove(x)
+            if round_timer>=5:
+                round_timer-=5
+            else:
+                round_timer=0
+
 def get_timer_for_difficulty():
     if difficulty == "Easy":
         return time_easy
@@ -124,14 +126,6 @@ def get_timer_for_difficulty():
     elif difficulty == "Hard":
         return time_hard
     return time_medium
-
-
-
-
-
-
-
-
 
 def set_selected_button(button):
     global selected_button
@@ -150,24 +144,37 @@ def change_state(new_state):
         not_in_set_cards=S.all_cards_not_in_sets()
     buttons.clear()
 
-def start_game():
-    global round_timer
-    round_timer = get_timer_for_difficulty()
-    change_state(RULES)
-
 def update_score(player):
     global player_score, computer_score
     if player=='player':
         player_score+=1
     elif player=="computer":
         computer_score+=1
-#all different screens:
+
+def update_score_no_set():
+    if not Pauze:
+        if len(S.controleer_sets())==0:
+            for _ in range(5):
+                update_score("player")
+            change_state(NO_SET_CORRECT)
+        else:
+            update_score("computer")
+            global computer_set
+            computer_set=find_set_by_computer()
+            change_state(NO_SET_INCORRECT)
+
+def find_set_by_computer():
+    gevonden_set=S.verwijder_willekeurige_set()
+    return gevonden_set
+
+
+#all screens:
 def start_screen():
     global buttons
     easy_btn = Button((400, 200, 200, 50), GRAY, f"Easy: {time_easy}s", None)
     medium_btn = Button((400, 270, 200, 50), GRAY, f"Medium: {time_medium}s", None)
     hard_btn = Button((400, 340, 200, 50), GRAY, f"Hard: {time_hard}s", None)
-    start_btn = Button((400, 420, 200, 50), BLUE, "Continue", lambda: (start_game(), set_selected_button(None)))
+    start_btn = Button((400, 420, 200, 50), BLUE, "Continue", lambda: (continue_from_start(), set_selected_button(None)))
 
     easy_btn.callback = lambda: (set_difficulty("Easy"), set_selected_button(easy_btn))
     medium_btn.callback = lambda: (set_difficulty("Medium"), set_selected_button(medium_btn))
@@ -214,20 +221,7 @@ def rules_screen():
     continue_btn.draw(screen)
     buttons.clear()
     buttons.append(continue_btn)
-
-def no_set_input():
-    if not Pauze:
-        if len(S.controleer_sets())==0:
-            for _ in range(5):
-                update_score("player")
-            change_state(NO_SET_CORRECT)
-        else:
-            update_score("computer")
-            global computer_set
-            computer_set=find_set_by_computer()
-            change_state(NO_SET_INCORRECT)
-        
-
+     
 def game_screen():
     global buttons,warning, no_set_button, pauze_button
     screen.fill((164, 173, 237))
@@ -259,7 +253,7 @@ def game_screen():
         screen.blit(FONT.render(f"Fastest set: {round(fastest_set,1)}", True, BLACK), (50, SCREEN_HEIGHT - 90))
     else:
         screen.blit(FONT.render(f"Fastest set: -", True, BLACK), (50, SCREEN_HEIGHT - 90))
-    no_set_button = Button((SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 110, 200, 40), GRAY, "No set possible", lambda: (no_set_input()))
+    no_set_button = Button((SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT - 110, 200, 40), GRAY, "No set possible", lambda: (update_score_no_set()))
     buttons.append(no_set_button)
     no_set_button.draw(screen)
     if Pauze==True:
@@ -329,15 +323,6 @@ def green_screen():
     text = FONT.render(f"Player Score: {player_score}", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 400))
 
-
-def continue_from_green():
-    global round_timer, choosen_indices, selected_cards
-    selected_cards=[]
-    S.verwijder_set(*choosen_indices)
-    S.voeg_kaarten_toe_op_tafel()
-    round_timer = get_timer_for_difficulty()
-    change_state(GAME)
-
 def red_screen(gevonden_set):
     global selected_set, input_text
     input_text=""
@@ -387,13 +372,6 @@ def red_screen(gevonden_set):
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 400))
     buttons.append(continue_btn)
 
-def continue_from_red():
-    global round_timer, selected_cards, selected_cards
-    selected_cards=[]
-    S.voeg_kaarten_toe_op_tafel()
-    round_timer = get_timer_for_difficulty()
-    change_state(GAME)
-
 def red_no_set_screen():
     global selected_set, input_text
     input_text=""
@@ -434,17 +412,6 @@ def red_no_set_screen():
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 400))
     buttons.append(continue_btn)
 
-def continue_from_red_no_set():
-    global round_timer, selected_cards, selected_cards
-    selected_cards=[]
-    S.verwijder_eerste_3_kaarten()
-    round_timer = get_timer_for_difficulty()
-    change_state(GAME)
-
-def find_set_by_computer():
-    gevonden_set=S.verwijder_willekeurige_set()
-    return gevonden_set
-
 def time_screen(gevonden_set):
     screen.fill(ORANGE)
     msg = BIG_FONT.render("TIME IS OVER!", True, BLACK)
@@ -481,13 +448,6 @@ def time_screen(gevonden_set):
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 400))
     buttons.append(continue_btn)
 
-def continue_from_time():
-    global round_timer, selected_cards
-    S.voeg_kaarten_toe_op_tafel()
-    selected_cards=[]
-    round_timer = get_timer_for_difficulty()
-    change_state(GAME)
-
 def grey_screen():
     screen.fill(GRAY)
     msg = BIG_FONT.render("Time over: No sets possible!", True, BLACK)
@@ -512,13 +472,6 @@ def grey_screen():
     buttons.append(exit_game_button)
     exit_game_button.draw(screen)
     buttons.append(continue_btn)
-
-def continue_from_grey():
-    global round_timer, selected_cards
-    selected_cards=[]
-    S.verwijder_eerste_3_kaarten()
-    round_timer = get_timer_for_difficulty()
-    change_state(GAME)
 
 def no_set_correct_screen():
     screen.fill(GREEN2)
@@ -546,13 +499,6 @@ def no_set_correct_screen():
     buttons.append(exit_game_button)
     exit_game_button.draw(screen)
     buttons.append(continue_btn)
-
-def continue_from_no_set_correct():
-    global round_timer, selected_cards
-    selected_cards=[]
-    S.verwijder_eerste_3_kaarten()
-    round_timer = get_timer_for_difficulty()
-    change_state(GAME)
 
 def no_set_incorrect_screen(gevonden_set):
     screen.fill(RED2)
@@ -590,13 +536,6 @@ def no_set_incorrect_screen(gevonden_set):
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 400))
     buttons.append(continue_btn)
 
-def continue_from_no_set_incorrect():
-    global round_timer, selected_cards
-    selected_cards=[]
-    S.voeg_kaarten_toe_op_tafel()
-    round_timer = get_timer_for_difficulty()
-    change_state(GAME)
-
 def end_screen():
     screen.fill(WHITE)
     if len(S.alle_kaarten+S.cards_on_table)<=20:
@@ -627,6 +566,64 @@ def end_screen():
     buttons.clear()
     buttons.append(continue_btn)
 
+
+#functions when continue from screen to other screen
+def continue_from_start():
+    global round_timer
+    round_timer = get_timer_for_difficulty()
+    change_state(RULES)
+
+def continue_from_green():
+    global selected_cards, round_timer
+    selected_cards=[]
+    S.verwijder_set(*choosen_indices)
+    S.voeg_kaarten_toe_op_tafel()
+    round_timer = get_timer_for_difficulty()
+    change_state(GAME)
+
+def continue_from_red():
+    global round_timer, selected_cards, selected_cards
+    selected_cards=[]
+    S.voeg_kaarten_toe_op_tafel()
+    round_timer = get_timer_for_difficulty()
+    change_state(GAME)
+
+def continue_from_red_no_set():
+    global round_timer, selected_cards, selected_cards
+    selected_cards=[]
+    S.verwijder_eerste_3_kaarten()
+    round_timer = get_timer_for_difficulty()
+    change_state(GAME)
+
+def continue_from_time():
+    global round_timer, selected_cards
+    S.voeg_kaarten_toe_op_tafel()
+    selected_cards=[]
+    round_timer = get_timer_for_difficulty()
+    change_state(GAME)
+
+def continue_from_grey():
+    global round_timer, selected_cards
+    selected_cards=[]
+    S.verwijder_eerste_3_kaarten()
+    round_timer = get_timer_for_difficulty()
+    change_state(GAME)
+
+def continue_from_no_set_correct():
+    global round_timer, selected_cards
+    selected_cards=[]
+    S.verwijder_eerste_3_kaarten()
+    round_timer = get_timer_for_difficulty()
+    change_state(GAME)
+
+def continue_from_no_set_incorrect():
+    global round_timer, selected_cards
+    selected_cards=[]
+    S.voeg_kaarten_toe_op_tafel()
+    round_timer = get_timer_for_difficulty()
+    change_state(GAME)
+
+
 # Main loop
 init_game()
 running = True
@@ -637,14 +634,13 @@ while running:
         if len(S.alle_kaarten+S.cards_on_table)<=20:
             if len(S.controleer_sets(S.alle_kaarten+S.cards_on_table))==0:
                 change_state(END)
-    if state == GAME:
         if wait_pauze>0:
             wait_pauze-= 1/FPS
+        if wait_cheat>0:
+            wait_cheat-=1 / FPS
         if Pauze == False:
             round_timer -= 1 / FPS
             total_elapsed_time += 1 / FPS
-            if wait_cheat>0:
-                wait_cheat-=1 / FPS
         if round_timer <= 0:
             if len(S.controleer_sets())!=0:
                 update_score("computer")
@@ -678,13 +674,8 @@ while running:
                         selected_cards = [index-1 for index in indices]
                         if max(selected_cards)>12 or min(selected_cards)<0:
                             print_warning("Index not in range!")
-                            selected_cards=[]
-                            input_text=''
                     except:
                         print_warning("No integer!")
-                        selected_cards=[]
-                        input_text=""
-
                 if event.key == pygame.K_RETURN:
                     try:
                         if len(indices) == 3 and len(set(indices)) == 3:
@@ -704,16 +695,12 @@ while running:
                         else:
                             if len(indices) < 3:
                                 print_warning("Not enough cards!")
-                                selected_cards=[]
                             elif len(indices) >3:
                                 print_warning("Too many cards!")
-                                selected_cards=[]
                             else:
                                 print_warning("Same cards selected!")
-                                selected_cards=[]
                     except:
                         pass
-                    input_text = ""
     if state in state_functions:
         state_functions[state]()
 

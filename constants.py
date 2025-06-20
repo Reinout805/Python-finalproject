@@ -4,6 +4,13 @@ pygame.init()
 pygame.font.init()
 
 
+'''
+This file "constants" displays all the constants used in the 'main' code. We have:
+    - Colors
+    - General
+    - Time 
+'''
+
 #colors
 WHITE = (255, 255, 255)
 GRAY = (150, 150, 150)
@@ -14,6 +21,7 @@ GREEN = (50, 200, 50)
 GREEN2=(15, 122, 53)
 BLACK = (0, 0, 0)
 BLUE = (50, 50, 200)
+BLUE2 = (164, 173, 237)
 
 #general
 SCREEN_WIDTH, SCREEN_HEIGHT = 960, 728
@@ -30,6 +38,3 @@ time_medium = 30
 time_hard=15
 round_timer = 30
 
-#init's
-buttons = []
-selected_button = []

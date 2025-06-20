@@ -2,6 +2,16 @@ import random
 from itertools import combinations
 from classes import Kaart, Spel
 
+
+'''
+This file "terminal_game" is an implementation of the game SET, but without graphics from pygame. Instead it uses the terminal to run the game. It is implemented
+with the basic logic of the game. There might be some bugs in the game, because while coding the graphics game, we changed some classes methodes to increase efficiency 
+in the graphics code. We didn't mainain this file, which could cause some bugs to be in it. 
+Neverthelles, you could give it a try. It is difficult to play the game due to lack of visual cards, however the code does present the basic idea of when to use 
+which function from the classes Kaart and Spel. Play the game if you want and press on "CTRl C" to exit this game in the terminal (when it didn't it itself due to a bug :)  ). 
+'''
+
+
 def game():
     punten_speler = 0
     punten_computer = 0

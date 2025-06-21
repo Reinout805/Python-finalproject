@@ -71,7 +71,7 @@ class Spel:
         #all sets currently found in the game
         self.gevonden_sets = [] 
         #all cards on the deck
-        self.alle_kaarten = [Kaart(kleur, vorm, vulling, aantal)
+        self.cards_on_deck = [Kaart(kleur, vorm, vulling, aantal)
                              for aantal in self.aantallen
                              for kleur in self.kleuren
                              for vulling in self.vullingen
@@ -88,10 +88,10 @@ class Spel:
 
     def maak_start_tafel(self):
         #choose 12 random cards from deck
-        actieve_kaarten = random.sample(self.alle_kaarten, 12)
+        actieve_kaarten = random.sample(self.cards_on_deck, 12)
         #remove these cards from the deck
         for kaart in actieve_kaarten:
-            self.alle_kaarten.remove(kaart)
+            self.cards_on_deck.remove(kaart)
         #add these cards to the table
         self.cards_on_table = actieve_kaarten
 
@@ -108,12 +108,11 @@ class Spel:
         cards=[] #all cards in sets
         index=[] #the indices of the cards in a set
         correct_index=list(range(12)) #list of all indices of cards on table
-        #only when there are sets, add the cards from the sets to the cards list if this cards is not in the list yet
-        if len(found_sets)>0:
-            for i in range(len(found_sets)):
-                for j in range(3):
-                    if found_sets[i][j] not in cards:
-                        cards.append(found_sets[i][j])
+        #add the cards from the sets to the cards list if this cards is not in the list yet
+        for i in range(len(found_sets)):
+            for j in range(3):
+                if found_sets[i][j] not in cards:
+                    cards.append(found_sets[i][j])
         #add the indices of the cards from the sets to the index list                
         for card in cards:
             index.append(self.cards_on_table.index(card))
@@ -129,11 +128,11 @@ class Spel:
             del self.cards_on_table[i - 1] #delete the cards from the table
 
     def voeg_kaarten_toe_op_tafel(self):
-        aantal_toevoegen = min(3, len(self.alle_kaarten)) #only add three cards if there are (more than) 3 cards in the deck
+        aantal_toevoegen = min(3, len(self.cards_on_deck)) #only add three cards if there are (more than) 3 cards in the deck
         for _ in range(aantal_toevoegen):
-            kaart = random.choice(self.alle_kaarten) #choose random card from deck
+            kaart = random.choice(self.cards_on_deck) #choose random card from deck
             self.cards_on_table.append(kaart)
-            self.alle_kaarten.remove(kaart)
+            self.cards_on_deck.remove(kaart)
 
     def verwijder_willekeurige_set(self):
         random_set = random.choice(self.controleer_sets()) #choose one random set from all possible sets
@@ -145,7 +144,7 @@ class Spel:
         verwijderde_kaarten = self.cards_on_table[:3] 
         del self.cards_on_table[:3] #delete first three cards
         self.voeg_kaarten_toe_op_tafel() #add extra cards
-        self.alle_kaarten.extend(verwijderde_kaarten)
+        self.cards_on_deck.extend(verwijderde_kaarten)
 
 
 '''

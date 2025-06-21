@@ -341,7 +341,7 @@ def game_screen():
 
     #texts:
     screen.blit(FONT.render(f"Time: {round(round_timer, 1)}s", True, BLACK), (SCREEN_WIDTH // 2 - 50, 20))
-    screen.blit(FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK), (SCREEN_WIDTH - 250, 20))
+    screen.blit(FONT.render(f"Deck: {len(S.cards_on_deck)} cards", True, BLACK), (SCREEN_WIDTH - 250, 20))
     screen.blit(FONT.render(f"Computer Score: {computer_score}", True, BLACK), (750, SCREEN_HEIGHT - 50))
     screen.blit(FONT.render(f"Player Score: {player_score}", True, BLACK), (50, SCREEN_HEIGHT - 50))
     if fastest_set>0: #only when we actually had a set by the player. When there hasn't been a set found by the player, fastest_set=-1 (see init_game)
@@ -407,7 +407,7 @@ def green_screen():
     else:
         text = FONT.render(f"Fastest set: -", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
-    text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
+    text = FONT.render(f"Deck: {len(S.cards_on_deck)} cards", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 460))
     text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 430))
@@ -415,7 +415,7 @@ def green_screen():
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 400))
 
     #cards:
-    for i, card in enumerate(selected_set): #display cards the set from the user, with are the cards who are selected via the input
+    for i, card in enumerate(selected_set): #display cards of the set from the user, whitch are the cards who are selected via the input
         x = SCREEN_WIDTH//2 + (i % 4) * 220 -320
         y = 230
         key = str(card)
@@ -429,7 +429,7 @@ def red_screen(gevonden_set):
     global selected_set, input_text, buttons
 
     #screen:
-    screen.fill(RED)
+    screen.fill(WHITE)
 
     #button:
     buttons.clear()
@@ -454,7 +454,7 @@ def red_screen(gevonden_set):
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
     text = FONT.render(f"Time used: {round(get_timer_for_difficulty()-round_timer, 1)}s", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 560))
-    text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
+    text = FONT.render(f"Deck: {len(S.cards_on_deck)} cards", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 460))
     text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 430))
@@ -510,7 +510,7 @@ def red_no_set_screen():
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
     text = FONT.render(f"Time used: {round(get_timer_for_difficulty()-round_timer, 1)}s", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 560))
-    text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
+    text = FONT.render(f"Deck: {len(S.cards_on_deck)} cards", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 460))
     text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 430))
@@ -553,7 +553,7 @@ def time_screen(gevonden_set):
     else:
         text = FONT.render(f"Fastest set: -", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
-    text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
+    text = FONT.render(f"Deck: {len(S.cards_on_deck)} cards", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 460))
     text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 430))
@@ -596,7 +596,7 @@ def grey_screen():
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
     text = FONT.render(f"Cards 1, 2 and 3 will be replaced. ", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 250))
-    text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
+    text = FONT.render(f"Deck: {len(S.cards_on_deck)} cards", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
     text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 340))
@@ -630,7 +630,7 @@ def no_set_correct_screen():
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 280))
     text = FONT.render(f"Cards 1, 2 and 3 will be replaced. ", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 250))
-    text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
+    text = FONT.render(f"Deck: {len(S.cards_on_deck)} cards", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
     text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 340))
@@ -662,7 +662,7 @@ def no_set_incorrect_screen(gevonden_set):
     else:
         text = FONT.render(f"Fastest set: -", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 370))
-    text = FONT.render(f"Deck: {len(S.alle_kaarten)} cards", True, BLACK)
+    text = FONT.render(f"Deck: {len(S.cards_on_deck)} cards", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 460))
     text = FONT.render(f"Computer Score: {computer_score}", True, BLACK)
     screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 430))
@@ -779,9 +779,9 @@ while running:
     if state==GAME:
         # if with all possible cards on table and in the deck together there are no sets possible, we should end the game by computer. So automatice_end because True (which could be used to 
         #determine the text on the end_game screen). THere has been prooven that this could only be the case with lower than 20 cards.
-        if len(S.alle_kaarten+S.cards_on_table)<20:
+        if len(S.cards_on_deck+S.cards_on_table)<=20:
             if len(all_possible_sets)==0: #helpfull to already use the checked sets on table if there is a set possible. If not, incorporate also the cards in deck
-                if len(S.controleer_sets(S.alle_kaarten+S.cards_on_table))==0:
+                if len(S.controleer_sets(S.cards_on_deck+S.cards_on_table))==0:
                     automative_end=True
                     change_state(END)
         #update the wait_times for pauze and cheat if neccesary

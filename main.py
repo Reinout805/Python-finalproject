@@ -237,9 +237,11 @@ def find_set_by_computer():
     return gevonden_set
 
 def set_fastest_time():
-    global fastest_set, current_time_used
+    global fastest_set, current_time_used, round_timer
     current_time_used=get_timer_for_difficulty()-round_timer
-    if fastest_set>current_time_used:
+    if fastest_set==-1:
+        fastest_set = current_time_used
+    elif fastest_set>current_time_used:
         fastest_set=current_time_used
 
 

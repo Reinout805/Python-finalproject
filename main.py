@@ -431,7 +431,7 @@ def red_screen(gevonden_set):
     global selected_set, input_text, buttons
 
     #screen:
-    screen.fill(WHITE)
+    screen.fill(RED)
 
     #button:
     buttons.clear()

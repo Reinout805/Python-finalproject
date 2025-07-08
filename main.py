@@ -307,7 +307,7 @@ def rules_screen():
         "               - maximum of 6 hide's per round",
         "POINTS:",
         "- You CORRECTLY identified a set: you get 1 point",
-        "- You INCORRETLY identified a set: computer gets 1 point",
+        "- You INCORRETLY identified a set: computer gets 3 point",
         "- You CORRECTLY identified that no sets are possible: you get 5 points",
         "- You INCORRECTLY identified that no sets are possible: computer gets 1 point",
         "- You run out of time while sets are possible: computer gets 1 point",
@@ -852,7 +852,8 @@ while running:
                                 change_state(GREEN_SCREEN)
                                 
                             else:
-                                update_score("computer")
+                                for _ in range(3):
+                                    update_score("computer")
                                 if len(all_possible_sets)==0: #if no sets possible at all
                                     change_state(RED_NO_SET_SCREEN)
                                 else:
